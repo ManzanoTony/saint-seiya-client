@@ -1,169 +1,153 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { requestApi } from "../assets/api";
+import LoadingScreen from "./LoadingScreen";
 
-const API_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5005"}/saints`;
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5005";
+const API_URL = `${API_BASE_URL}/saints`;
 
-function CommandCenter({ onBack, onSelectSaint }) {
-  const [saints, setSaints] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showFormModal, setShowFormModal] = useState(false);
-  
-  const [showSearchInput, setShowSearchInput] = useState(false);
-  const [showFilterBar, setShowFilterBar] = useState(false);
+function CommandCenter({ saints, setSaints, onBack, onOpenWar, onSelectSaint }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRank, setFilterRank] = useState("All");
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isLoadingSaints, setIsLoadingSaints] = useState(true);
+  const [creationStep, setCreationStep] = useState("");
+  const [rosterError, setRosterError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [noticeMessage, setNoticeMessage] = useState("");
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRank, setSelectedRank] = useState("All");
-  const [selectedStatus, setSelectedStatus] = useState("All");
-
+  // Create Form State
   const [formData, setFormData] = useState({
     name: "",
     rank: "Bronze",
     constellation: "",
-    gender: "Male",
-    status: "Active"
+    gender: "Male"
   });
-
-  const scrollContainerRef = useRef(null);
-  const isHoveredRef = useRef(false);
-
-  const fetchSaints = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(API_URL);
-      const data = await res.json();
-      setSaints(data);
-      setIsLoading(false);
-    } catch (err) {
-      console.error("Error fetching saints:", err);
-      setIsLoading(false);
-    }
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchSaints();
-  }, []);
+    let isCurrent = true;
 
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    let scrollDirection = 1;
-    let animationFrameId;
-    let pauseCounter = 0;
-
-    const autoScroll = () => {
-      if (!isHoveredRef.current && container) {
-        if (pauseCounter > 0) {
-          pauseCounter--;
-        } else {
-          container.scrollTop += 0.5 * scrollDirection;
-
-          if (container.scrollTop + container.clientHeight >= container.scrollHeight - 2) {
-            scrollDirection = -1;
-            pauseCounter = 60;
-          } else if (container.scrollTop <= 0) {
-            scrollDirection = 1;
-            pauseCounter = 60;
-          }
+    requestApi(API_URL, {}, "Could not load Saints.")
+      .then((data) => {
+        if (!Array.isArray(data)) {
+          throw new Error("The server returned an invalid Saint roster.");
         }
-      }
-      animationFrameId = requestAnimationFrame(autoScroll);
+        if (isCurrent) {
+          setSaints(data);
+          setRosterError("");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching Saints:", error);
+        if (isCurrent) {
+          setRosterError(error.message);
+        }
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setIsLoadingSaints(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
     };
+  }, [setSaints]);
 
-    animationFrameId = requestAnimationFrame(autoScroll);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [saints]);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleCreateSaint = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setCreationStep("Generating Saint lore...");
+    setActionError("");
+    setNoticeMessage("");
+
+    const fullRank = `${formData.rank} Saint`;
+    const defaultPower = formData.rank === "Gold" ? 250 : formData.rank === "Silver" ? 160 : 115;
+    const defaultImage = formData.rank === "Gold" ? "/Saga.png" : formData.rank === "Silver" ? "/Marin.png" : "/Seiya.png";
+
+    let generatedLore = "";
+    let loreWarning = "";
+    try {
+      const loreData = await requestApi(
+        `${API_BASE_URL}/api/generate-lore`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            saintName: formData.name,
+            rank: fullRank,
+            constellation: formData.constellation,
+            gender: formData.gender,
+            isCustom: true
+          })
+        },
+        "Could not generate Saint lore."
+      );
+      if (typeof loreData?.lore !== "string" || !loreData.lore.trim()) {
+        throw new Error("The lore service returned no lore text.");
+      }
+      generatedLore = loreData.lore;
+    } catch (err) {
+      console.error("Lore generation failed while creating Saint:", err);
+      loreWarning = `Saint lore could not be generated: ${err.message}`;
+    }
+
+    const newSaint = {
+      name: formData.name,
+      rank: fullRank,
+      constellation: formData.constellation,
+      gender: formData.gender,
+      cosmosPower: defaultPower,
+      status: "Ready",
+      image: defaultImage,
+      comments: "",
+      lore: generatedLore,
+      isCustom: true
+    };
 
     try {
-      const loreRes = await fetch(`${API_BASE_URL}/api/generate-lore`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          saintName: formData.name,
-          rank: formData.rank,
-          constellation: formData.constellation,
-          gender: formData.gender,
-          isCustom: true
-        })
-      });
-
-      const loreData = await loreRes.json();
-      const generatedLore = loreRes.ok ? loreData.lore : "A dedicated warrior sworn to Athena's Sanctuary.";
-      const generatedImage = loreRes.ok && loreData.image ? loreData.image : "/Generic-Warrior-1.jpg";
-
-      const newSaintPayload = {
-        name: formData.name,
-        rank: `${formData.rank} Saint`,
-        constellation: formData.constellation,
-        cosmosPower: formData.rank === "Gold" ? 250 : formData.rank === "Silver" ? 160 : 115,
-        status: formData.status,
-        image: generatedImage,
-        gender: formData.gender,
-        isCustom: true,
-        lore: generatedLore
-      };
-
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newSaintPayload)
-      });
-      const newSaint = await res.json();
-      setSaints([...saints, newSaint]);
-      setIsSubmitting(false);
-      setShowFormModal(false);
-      setFormData({
-        name: "",
-        rank: "Bronze",
-        constellation: "",
-        gender: "Male",
-        status: "Active"
-      });
+      setCreationStep("Saving Saint...");
+      const created = await requestApi(
+        API_URL,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newSaint),
+        },
+        "Could not create Saint."
+      );
+      setSaints((prev) => [...prev, created]);
+      setFormData({ name: "", rank: "Bronze", constellation: "", gender: "Male" });
+      setShowCreateModal(false);
+      if (loreWarning) {
+        setNoticeMessage(`${loreWarning} The Saint was created; you can reveal lore later.`);
+      }
     } catch (err) {
       console.error("Error creating saint:", err);
+      setActionError(err.message);
+    } finally {
       setIsSubmitting(false);
+      setCreationStep("");
     }
-  };
-
-  const handleSelectSaint = (saint) => {
-    onSelectSaint(saint);
-  };
-
-  const clearAllFilters = () => {
-    setSearchQuery("");
-    setSelectedRank("All");
-    setSelectedStatus("All");
   };
 
   const filteredSaints = saints.filter((saint) => {
-    const cleanQuery = searchQuery.trim().toLowerCase();
-    const cleanName = (saint.name || "").toLowerCase();
-    const matchesSearch = cleanName.includes(cleanQuery);
-
-    const matchesRank = selectedRank === "All" || (saint.rank || "").includes(selectedRank);
-    const matchesStatus = selectedStatus === "All" || (saint.status || "") === selectedStatus;
-
-    return matchesSearch && matchesRank && matchesStatus;
+    const matchesSearch =
+      saint.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      saint.constellation.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRank =
+      filterRank === "All" || saint.rank.toLowerCase().includes(filterRank.toLowerCase());
+    return matchesSearch && matchesRank;
   });
-
-  const isFilterActive = searchQuery || selectedRank !== "All" || selectedStatus !== "All";
 
   return (
     <div className="command-container">
       <div className="command-top-bar">
-        <button onClick={onBack} className="back-btn" style={{ margin: 0 }}>
+        <button onClick={onBack} className="back-btn">
           ← Home
         </button>
-        <div className="menu-icon">☰ Menu</div>
       </div>
 
       <header className="command-header">
@@ -171,184 +155,193 @@ function CommandCenter({ onBack, onSelectSaint }) {
         <p>Holy War Roster Operations</p>
       </header>
 
-      <div className="alert-banner" onClick={() => alert("Alert clicked! Random gameplay event triggered.")}>
-        <h4>⚠️ Sanctuary Alert Active</h4>
-        <p>Cosmic disturbance detected in the Sanctuary. Tap for details.</p>
-      </div>
+      {rosterError ? (
+        <p className="request-error" role="alert">
+          Could not load the roster: {rosterError}
+        </p>
+      ) : null}
+      {!showCreateModal && actionError ? (
+        <p className="request-error" role="alert">{actionError}</p>
+      ) : null}
+      {noticeMessage ? <p className="request-notice" role="status">{noticeMessage}</p> : null}
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-        <h3 style={{ color: "#66fcf1", fontSize: "1rem", margin: 0 }}>
-          Active Roster ({filteredSaints.length})
+      {/* War Room entry point */}
+      <div
+        className="form-card"
+        style={{
+          borderColor: "#ff4d4d",
+          marginBottom: "15px",
+          textAlign: "center"
+        }}
+      >
+        <h3 style={{ color: "#ff4d4d", margin: "0 0 6px 0" }}>
+          ⚔️ Sanctuary War Room
         </h3>
-        {isFilterActive ? (
-          <button 
-            onClick={clearAllFilters} 
-            style={{ background: "transparent", border: "none", color: "#ff4d4d", fontSize: "0.8rem", cursor: "pointer", fontWeight: "bold" }}
-          >
-            Clear Filters
-          </button>
-        ) : null}
+        <p style={{ color: "#c5c6c7", fontSize: "0.85rem", margin: "0 0 12px 0" }}>
+          Defend Athena's Sanctuary, deploy your Saints, and track your campaign.
+        </p>
+        <button
+          onClick={onOpenWar}
+          className="btn-primary"
+          style={{ padding: "8px 16px", fontSize: "0.85rem" }}
+        >
+          ⚔️ Enter War Room
+        </button>
       </div>
 
-      {showSearchInput ? (
-        <div style={{ marginBottom: "10px" }}>
+      {showSearch ? (
+        <div className="form-card" style={{ marginBottom: "12px", padding: "10px" }}>
+          <label htmlFor="saint-search" style={{ display: "block", marginBottom: "6px" }}>
+            Search saints by name or armor
+          </label>
           <input
-            type="text"
-            placeholder="Search warrior by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            id="saint-search"
+            type="search"
+            placeholder="Search by name or armor..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="form-input"
             autoFocus
           />
         </div>
       ) : null}
 
-      {showFilterBar ? (
-        <div style={{ display: "flex", gap: "10px", marginBottom: "15px", background: "#1f2833", padding: "10px", borderRadius: "6px", border: "1px solid #45a29e" }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: "0.75rem", color: "#c5c6c7", display: "block", marginBottom: "4px" }}>Rank:</label>
-            <select 
-              value={selectedRank} 
-              onChange={(e) => setSelectedRank(e.target.value)} 
+      {showFilter ? (
+        <div className="form-card" style={{ marginBottom: "12px", padding: "10px" }}>
+          <label htmlFor="saint-rank-filter" style={{ display: "block", marginBottom: "6px" }}>
+            Filter saints by rank
+          </label>
+          <div className="form-buttons">
+            <select
+              id="saint-rank-filter"
+              value={filterRank}
+              onChange={(e) => setFilterRank(e.target.value)}
               className="form-input"
-              style={{ padding: "4px 8px" }}
             >
               <option value="All">All Ranks</option>
-              <option value="Gold">Gold</option>
-              <option value="Silver">Silver</option>
-              <option value="Bronze">Bronze</option>
-              <option value="Guard">Guard</option>
+              <option value="Bronze">Bronze Saints</option>
+              <option value="Silver">Silver Saints</option>
+              <option value="Gold">Gold Saints</option>
+              <option value="Guard">Generic Guards</option>
             </select>
-          </div>
-
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: "0.75rem", color: "#c5c6c7", display: "block", marginBottom: "4px" }}>Status:</label>
-            <select 
-              value={selectedStatus} 
-              onChange={(e) => setSelectedStatus(e.target.value)} 
-              className="form-input"
-              style={{ padding: "4px 8px" }}
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Ready">Ready</option>
-              <option value="Injured">Injured</option>
-              <option value="On Mission">On Mission</option>
-            </select>
+            {filterRank !== "All" ? (
+              <button
+                type="button"
+                onClick={() => setFilterRank("All")}
+                className="btn-secondary"
+              >
+                Clear Filter
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}
 
-      <div 
-        ref={scrollContainerRef}
-        onMouseEnter={() => (isHoveredRef.current = true)}
-        onMouseLeave={() => (isHoveredRef.current = false)}
-        className="scrollable-roster-container"
-      >
-        {isLoading ? (
-          <div style={{ textAlign: "center", padding: "40px 20px", color: "#66fcf1" }}>
-            <div style={{ fontSize: "1.5rem", marginBottom: "10px" }}>⏳</div>
-            <p style={{ fontWeight: "bold", margin: "0 0 5px 0" }}>Waking up Sanctuary Server...</p>
-            <p style={{ fontSize: "0.85rem", color: "#c5c6c7", margin: 0 }}>
-              Free hosting servers go to sleep when idle. Charging Cosmos energy, please hold!
-            </p>
+      <h3 style={{ color: "#66fcf1", marginBottom: "8px" }}>
+        Active Roster ({filteredSaints.length})
+      </h3>
+
+      {/* Scrollable roster */}
+      <div className="roster-grid" aria-label="Saint roster">
+        {isLoadingSaints ? (
+          <LoadingScreen message="Loading Saints..." className="loading-screen-roster" />
+        ) : filteredSaints.map((saint) => (
+          <div
+            key={saint.id}
+            className="saint-card"
+            onClick={() => onSelectSaint(saint)}
+          >
+            <img
+              src={saint.image?.startsWith("http") || saint.image?.startsWith("/") ? saint.image : `/${saint.image ? saint.image : "Generic-Warrior-1.jpg"}`}
+              alt={saint.name}
+              className="saint-card-img"
+            />
+            <h4>{saint.name}</h4>
+            <p><strong>Rank:</strong> {saint.rank}</p>
+            <p><strong>Armor:</strong> {saint.constellation}</p>
+            <p><strong>Status:</strong> <span style={{ color: saint.status === "Injured" ? "#ff4d4d" : "#66fcf1" }}>{saint.status}</span></p>
           </div>
-        ) : filteredSaints.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#c5c6c7", padding: "20px 0" }}>
-            No warriors found matching your criteria.
-          </p>
-        ) : (
-          <div className="roster-grid">
-            {filteredSaints.map((saint) => (
-              <div 
-                key={saint.id} 
-                className="saint-card" 
-                onClick={() => handleSelectSaint(saint)}
-                style={{ cursor: "pointer" }}
-              >
-                <div className="saint-card-img">
-                  <img
-                    src={saint.image?.startsWith("http") || saint.image?.startsWith("/") ? saint.image : `/${saint.image}`}
-                    alt={saint.name}
-                  />
-                </div>
-                <h4>{saint.name}</h4>
-                <p><strong>Rank:</strong> {saint.rank ? saint.rank : "Unknown"}</p>
-                <p style={{ marginBottom: "4px" }}><strong>Armor:</strong> {saint.constellation}</p>
-              </div>
-            ))}
-          </div>
-        )}
+        ))}
+        {!isLoadingSaints && !rosterError && filteredSaints.length === 0 ? (
+          <p className="roster-message">No Saints match your search or filter.</p>
+        ) : null}
       </div>
 
+      {/* Bottom Control Navigation */}
       <div className="command-bottom-nav">
-        <button onClick={() => setShowFormModal(true)} className="nav-pill-btn">
+        <button
+          onClick={() => {
+            setActionError("");
+            setNoticeMessage("");
+            setShowCreateModal(true);
+          }}
+          className="nav-pill-btn"
+        >
           🛡️ Create Saint
         </button>
-        <button 
-          onClick={() => setShowSearchInput(!showSearchInput)} 
-          className="nav-pill-btn"
-          style={{ backgroundColor: showSearchInput ? "#45a29e" : "#1f2833", color: showSearchInput ? "#0b0c10" : "#66fcf1" }}
-        >
-          🔍 Search
+        <button onClick={() => setShowSearch((isVisible) => !isVisible)} className="nav-pill-btn">
+          {showSearch ? "✕ Close Search" : "🔍 Search"}
         </button>
-        <button 
-          onClick={() => setShowFilterBar(!showFilterBar)} 
-          className="nav-pill-btn"
-          style={{ backgroundColor: showFilterBar ? "#45a29e" : "#1f2833", color: showFilterBar ? "#0b0c10" : "#66fcf1" }}
-        >
-          ⚙️ Filter
+        <button onClick={() => setShowFilter((isVisible) => !isVisible)} className="nav-pill-btn">
+          {showFilter ? "✕ Close Filter" : "⚙️ Filter"}
         </button>
       </div>
 
-      {showFormModal ? (
+      {/* Create Modal */}
+      {showCreateModal ? (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3 style={{ color: "#45a29e", marginTop: 0 }}>Create Saint</h3>
-            <form onSubmit={handleSubmit} className="form-grid">
+            <h3 style={{ color: "#45a29e", marginTop: 0 }}>Create Custom Saint</h3>
+            {actionError ? <p className="request-error" role="alert">{actionError}</p> : null}
+            {noticeMessage ? <p className="request-notice" role="status">{noticeMessage}</p> : null}
+            {isSubmitting ? (
+              <p className="request-notice" role="status">{creationStep}</p>
+            ) : null}
+            <form onSubmit={handleCreateSaint} className="form-grid">
               <input
                 type="text"
-                name="name"
                 placeholder="Saint Name"
                 value={formData.name}
-                onChange={handleChange}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
                 className="form-input"
               />
-              <select name="rank" value={formData.rank} onChange={handleChange} className="form-input">
+              <select
+                value={formData.rank}
+                onChange={(e) => setFormData({ ...formData, rank: e.target.value })}
+                className="form-input"
+              >
                 <option value="Bronze">Bronze Saint</option>
                 <option value="Silver">Silver Saint</option>
                 <option value="Gold">Gold Saint</option>
               </select>
-              <select name="gender" value={formData.gender} onChange={handleChange} className="form-input">
+              <input
+                type="text"
+                placeholder="Constellation / Armor"
+                value={formData.constellation}
+                onChange={(e) => setFormData({ ...formData, constellation: e.target.value })}
+                required
+                className="form-input"
+              />
+              <select
+                value={formData.gender}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                className="form-input"
+              >
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Other">Other</option>
               </select>
-              <input
-                type="text"
-                name="constellation"
-                placeholder="Constellation / Armor (e.g., Dog, Pegasus)"
-                value={formData.constellation}
-                onChange={handleChange}
-                required
-                className="form-input"
-              />
-              <select name="status" value={formData.status} onChange={handleChange} className="form-input">
-                <option value="Active">Active</option>
-                <option value="Ready">Ready</option>
-                <option value="Injured">Injured</option>
-                <option value="On Mission">On Mission</option>
-              </select>
 
               <div className="form-buttons" style={{ marginTop: "15px" }}>
                 <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? "Summoning & Forging Armor..." : "Create Saint"}
+                  {isSubmitting ? "Forging Legend..." : "Create Warrior"}
                 </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowFormModal(false)} 
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
                   className="btn-secondary"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
@@ -357,6 +350,7 @@ function CommandCenter({ onBack, onSelectSaint }) {
           </div>
         </div>
       ) : null}
+
     </div>
   );
 }
