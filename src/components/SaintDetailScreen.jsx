@@ -13,7 +13,13 @@ function formatRecoveryTime(milliseconds) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSaint }) {
+function SaintDetailScreen({
+  saint,
+  loadError,
+  onBack,
+  onUpdateSaint,
+  onDeleteSaint,
+}) {
   const [currentTime, setCurrentTime] = useState(0);
   const [comments, setComments] = useState(saint.comments || "");
   const [lore, setLore] = useState("");
@@ -41,9 +47,10 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
     return () => clearInterval(timer);
   }, [saint.status]);
 
-  const recoveryMilliseconds = currentTime && saint.recoveryUntil
-    ? Date.parse(saint.recoveryUntil) - currentTime
-    : null;
+  const recoveryMilliseconds =
+    currentTime && saint.recoveryUntil
+      ? Date.parse(saint.recoveryUntil) - currentTime
+      : null;
 
   const handleGenerateLore = async () => {
     if (showLore) {
@@ -70,7 +77,7 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
       const generatedText = await generateSaintLore(
         saint.name,
         saint.rank,
-        saint.constellation
+        saint.constellation,
       );
       setLore(generatedText);
       setShowLore(true);
@@ -82,12 +89,15 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ lore: generatedText }),
         },
-        "Lore was generated but could not be saved."
+        "Lore was generated but could not be saved.",
       );
       onUpdateSaint(updatedSaint);
     } catch (err) {
       console.error("Error generating lore:", err);
-      setLoreError(err.message || "Could not generate the lore. Please check the server and Groq API configuration.");
+      setLoreError(
+        err.message ||
+          "Could not generate the lore. Please check the server and Groq API configuration.",
+      );
     } finally {
       setIsGeneratingLore(false);
     }
@@ -109,7 +119,7 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ comments }),
         },
-        "Could not save Sanctuary notes."
+        "Could not save Sanctuary notes.",
       );
       onUpdateSaint(updated);
     } catch (err) {
@@ -127,12 +137,14 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
     setActionError("");
 
     const newRankFull = `${formData.rank} Saint`;
-    const statusToSave = saint.status === "Injured"
-      ? "Injured"
-      : formData.status === "Injured"
-        ? saint.status
-        : formData.status;
-    const hiddenCosmosPower = formData.rank === "Gold" ? 250 : formData.rank === "Silver" ? 160 : 115;
+    const statusToSave =
+      saint.status === "Injured"
+        ? "Injured"
+        : formData.status === "Injured"
+          ? saint.status
+          : formData.status;
+    const hiddenCosmosPower =
+      formData.rank === "Gold" ? 250 : formData.rank === "Silver" ? 160 : 115;
     const newImage = saint.isCustom
       ? formData.rank === "Gold"
         ? "/Saga.png"
@@ -146,11 +158,13 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
       const rankChanged = saint.rank !== newRankFull;
 
       if (saint.isCustom && rankChanged) {
-        setActionMessage("Rank changed! Forging new legend with the Sanctuary Oracle...");
+        setActionMessage(
+          "Rank changed! Forging new legend with the Sanctuary Oracle...",
+        );
         updatedLore = await generateSaintLore(
           saint.name,
           newRankFull,
-          saint.constellation
+          saint.constellation,
         );
         setLore(updatedLore);
       }
@@ -161,19 +175,19 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-          name: saint.name,
-          rank: newRankFull,
-          constellation: saint.constellation,
-          cosmosPower: hiddenCosmosPower,
-          status: statusToSave,
-          image: newImage,
-          gender: saint.gender,
-          comments: comments,
-          lore: updatedLore,
-          isCustom: saint.isCustom
+            name: saint.name,
+            rank: newRankFull,
+            constellation: saint.constellation,
+            cosmosPower: hiddenCosmosPower,
+            status: statusToSave,
+            image: newImage,
+            gender: saint.gender,
+            comments: comments,
+            lore: updatedLore,
+            isCustom: saint.isCustom,
           }),
         },
-        "Could not update Saint."
+        "Could not update Saint.",
       );
       onUpdateSaint(updated);
       setIsActionLoading(false);
@@ -190,7 +204,7 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
 
   const handleDelete = async () => {
     const confirmed = window.confirm(
-      `Are you sure you want to send ${saint.name} to rest in peace?`
+      `Are you sure you want to send ${saint.name} to rest in peace?`,
     );
 
     if (confirmed) {
@@ -202,7 +216,7 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
         await requestApi(
           `${API_URL}/${saint.id}`,
           { method: "DELETE" },
-          "Could not delete Saint."
+          "Could not delete Saint.",
         );
         onDeleteSaint(saint.id);
       } catch (err) {
@@ -233,19 +247,45 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
           Could not refresh Saint records: {loadError}
         </p>
       ) : null}
-      {actionError ? <p className="request-error" role="alert">{actionError}</p> : null}
+      {actionError ? (
+        <p className="request-error" role="alert">
+          {actionError}
+        </p>
+      ) : null}
 
       {/* Scrollable Content Wrapper with Always-Reserved Scrollbar Space */}
       <div className="saint-detail-content">
         {isActionLoading ? (
-          <div className="form-card" style={{ textAlign: "center", borderColor: "#66fcf1", marginBottom: "15px" }}>
-            <p style={{ color: "#66fcf1", fontWeight: "bold", margin: "0 0 5px 0" }}>⏳ {actionMessage}</p>
-            <p style={{ fontSize: "0.8rem", color: "#c5c6c7", margin: 0 }}>Please wait, contacting the server...</p>
+          <div
+            className="form-card"
+            style={{
+              textAlign: "center",
+              borderColor: "#66fcf1",
+              marginBottom: "15px",
+            }}
+          >
+            <p
+              style={{
+                color: "#66fcf1",
+                fontWeight: "bold",
+                margin: "0 0 5px 0",
+              }}
+            >
+              ⏳ {actionMessage}
+            </p>
+            <p style={{ fontSize: "0.8rem", color: "#c5c6c7", margin: 0 }}>
+              Please wait, contacting the server...
+            </p>
           </div>
         ) : null}
 
-        <div className="form-card saint-heading-card" style={{ textAlign: "center", marginBottom: "15px" }}>
-          <h2 style={{ color: "#66fcf1", margin: "0 0 5px 0" }}>{saint.name}</h2>
+        <div
+          className="form-card saint-heading-card"
+          style={{ textAlign: "center", marginBottom: "15px" }}
+        >
+          <h2 style={{ color: "#66fcf1", margin: "0 0 5px 0" }}>
+            {saint.name}
+          </h2>
           <span
             style={{
               background: "#45a29e",
@@ -253,17 +293,24 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
               padding: "4px 12px",
               borderRadius: "12px",
               fontWeight: "bold",
-              fontSize: "0.85rem"
+              fontSize: "0.85rem",
             }}
           >
             {saint.rank}
           </span>
         </div>
 
-        <div className="form-card saint-stats-card" style={{ marginBottom: "15px" }}>
+        <div
+          className="form-card saint-stats-card"
+          style={{ marginBottom: "15px" }}
+        >
           <div style={{ textAlign: "center", marginBottom: "15px" }}>
             <img
-              src={saint.image?.startsWith("http") || saint.image?.startsWith("/") ? saint.image : `/${saint.image ? saint.image : "Generic-Warrior-1.jpg"}`}
+              src={
+                saint.image?.startsWith("http") || saint.image?.startsWith("/")
+                  ? saint.image
+                  : `/${saint.image ? saint.image : "Generic-Warrior-1.jpg"}`
+              }
               alt={saint.name}
               style={{
                 maxHeight: "180px",
@@ -271,17 +318,37 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
                 objectFit: "contain",
                 borderRadius: "8px",
                 background: "#0b0c10",
-                padding: "5px"
+                padding: "5px",
               }}
             />
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", color: "#c5c6c7", fontSize: "0.9rem" }}>
-            <div><strong>Armor / Constellation:</strong> {saint.constellation}</div>
-            <div><strong>Cosmos Power:</strong> <span style={{ color: "#66fcf1", fontWeight: "bold" }}>{saint.cosmosPower ? saint.cosmosPower : "N/A"}</span></div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              color: "#c5c6c7",
+              fontSize: "0.9rem",
+            }}
+          >
+            <div>
+              <strong>Armor / Constellation:</strong> {saint.constellation}
+            </div>
+            <div>
+              <strong>Cosmos Power:</strong>{" "}
+              <span style={{ color: "#66fcf1", fontWeight: "bold" }}>
+                {saint.cosmosPower ? saint.cosmosPower : "N/A"}
+              </span>
+            </div>
             <div>
               <strong>Status:</strong>{" "}
-              <span style={{ color: saint.status === "Injured" ? "#ff4d4d" : "#66fcf1", fontWeight: "bold" }}>
+              <span
+                style={{
+                  color: saint.status === "Injured" ? "#ff4d4d" : "#66fcf1",
+                  fontWeight: "bold",
+                }}
+              >
                 {saint.status}
               </span>
               {saint.status === "Injured" && recoveryMilliseconds !== null ? (
@@ -298,37 +365,72 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
         {/* Stable-width Lore & History Card */}
         <div className="form-card saint-lore-card">
           <div className="saint-lore-header">
-            <h4 style={{ color: "#66fcf1", margin: 0 }}>📜 Saint Lore & History</h4>
+            <h4 style={{ color: "#66fcf1", margin: 0 }}>
+              Saint Lore & History
+            </h4>
             <button
               onClick={handleGenerateLore}
               className="btn-edit"
               disabled={isGeneratingLore}
               style={{ fontSize: "0.75rem", padding: "4px 8px" }}
             >
-              {isGeneratingLore ? "Consulting..." : saint.isCustom === false ? (showLore ? "📖 Hide Canon" : "📖 View Canon") : (showLore ? "✨ Hide Lore" : "✨ Reveal Lore")}
+              {isGeneratingLore
+                ? "Consulting..."
+                : saint.isCustom === false
+                  ? showLore
+                    ? "Hide Canon"
+                    : "View Canon"
+                  : showLore
+                    ? "Hide Lore"
+                    : "Reveal Lore"}
             </button>
           </div>
 
           {isGeneratingLore ? (
-            <div style={{ textAlign: "center", padding: "15px 0", color: "#66fcf1", marginTop: "8px" }}>
-              <p style={{ fontWeight: "bold", margin: "0 0 4px 0" }}>✨ Consulting the Groq Sanctuary Oracle...</p>
-              <p style={{ fontSize: "0.80rem", color: "#c5c6c7", margin: 0 }}>Reading constellation memories from ancient history...</p>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "15px 0",
+                color: "#66fcf1",
+                marginTop: "8px",
+              }}
+            >
+              <p style={{ fontWeight: "bold", margin: "0 0 4px 0" }}>
+                Consulting the Groq Sanctuary Oracle...
+              </p>
+              <p style={{ fontSize: "0.80rem", color: "#c5c6c7", margin: 0 }}>
+                Reading constellation memories from ancient history...
+              </p>
             </div>
           ) : showLore && (lore || saint.lore) ? (
-            <p className="saint-lore-text">
-              "{lore || saint.lore}"
-            </p>
+            <p className="saint-lore-text">"{lore || saint.lore}"</p>
           ) : null}
 
           {loreError ? (
-            <p role="alert" style={{ color: "#ff8080", fontSize: "0.85rem", margin: "8px 0 0" }}>
+            <p
+              role="alert"
+              style={{
+                color: "#ff8080",
+                fontSize: "0.85rem",
+                margin: "8px 0 0",
+              }}
+            >
               {loreError}
             </p>
           ) : null}
         </div>
 
-        <div className="form-card saint-notes-card" style={{ marginBottom: "10px", boxSizing: "border-box", width: "100%" }}>
-          <h4 style={{ color: "#45a29e", margin: "0 0 8px 0" }}>Sanctuary Notes & Tactical Comments</h4>
+        <div
+          className="form-card saint-notes-card"
+          style={{
+            marginBottom: "10px",
+            boxSizing: "border-box",
+            width: "100%",
+          }}
+        >
+          <h4 style={{ color: "#45a29e", margin: "0 0 8px 0" }}>
+            Sanctuary Notes & Tactical Comments
+          </h4>
           <textarea
             rows="3"
             placeholder="Type notes or strategy for this warrior..."
@@ -339,20 +441,39 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
             }}
             onBlur={handleSaveComments}
             className="form-input"
-            style={{ width: "100%", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }}
+            style={{
+              width: "100%",
+              resize: "vertical",
+              fontFamily: "inherit",
+              boxSizing: "border-box",
+            }}
           />
-          <div style={{ fontSize: "0.75rem", color: "#45a29e", marginTop: "4px", textAlign: "right" }}>
-            {isSavingComments
-              ? "Saving notes..."
-              : commentsError
-                ? <span className="request-error-text" role="alert">{commentsError}</span>
-                : "💾 Saves automatically when clicking outside text box"}
+          <div
+            style={{
+              fontSize: "0.75rem",
+              color: "#45a29e",
+              marginTop: "4px",
+              textAlign: "right",
+            }}
+          >
+            {isSavingComments ? (
+              "Saving notes..."
+            ) : commentsError ? (
+              <span className="request-error-text" role="alert">
+                {commentsError}
+              </span>
+            ) : (
+              "Saves automatically when clicking outside text box"
+            )}
           </div>
         </div>
       </div>
 
       {/* Pinned Bottom Navigation Action Bar */}
-      <div className="command-bottom-nav saint-detail-actions" style={{ marginTop: "auto", paddingTop: "5px" }}>
+      <div
+        className="command-bottom-nav saint-detail-actions"
+        style={{ marginTop: "auto", paddingTop: "5px" }}
+      >
         <button
           onClick={() => {
             setFormData({
@@ -364,9 +485,9 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
           className="nav-pill-btn saint-edit-button"
           disabled={isActionLoading}
         >
-          ✏️ Edit
+          Edit
         </button>
-        
+
         {saint.isCustom ? (
           <button
             onClick={handleDelete}
@@ -374,7 +495,7 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
             style={{ borderColor: "#ff4d4d", color: "#ff4d4d" }}
             disabled={isActionLoading}
           >
-            🪦 Send to Rest in Peace
+            Send to Rest in Peace
           </button>
         ) : null}
       </div>
@@ -382,14 +503,27 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
       {showEditModal ? (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3 style={{ color: "#45a29e", marginTop: 0 }}>Edit Warrior Rank & Status</h3>
+            <h3 style={{ color: "#45a29e", marginTop: 0 }}>
+              Edit Warrior Rank & Status
+            </h3>
             <form onSubmit={handleSaveEdit} className="form-grid">
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#c5c6c7", display: "block", marginBottom: "4px" }}>Rank:</label>
+                <label
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#c5c6c7",
+                    display: "block",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Rank:
+                </label>
                 <select
                   name="rank"
                   value={formData.rank}
-                  onChange={(e) => setFormData({ ...formData, rank: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, rank: e.target.value })
+                  }
                   className="form-input"
                 >
                   <option value="Bronze">Bronze Saint</option>
@@ -399,11 +533,22 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
               </div>
 
               <div>
-                <label style={{ fontSize: "0.75rem", color: "#c5c6c7", display: "block", marginBottom: "4px" }}>Status:</label>
+                <label
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#c5c6c7",
+                    display: "block",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Status:
+                </label>
                 <select
                   name="status"
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
                   className="form-input"
                   disabled={isActionLoading || saint.status === "Injured"}
                 >
@@ -428,7 +573,11 @@ function SaintDetailScreen({ saint, loadError, onBack, onUpdateSaint, onDeleteSa
               </div>
 
               <div className="form-buttons" style={{ marginTop: "15px" }}>
-                <button type="submit" className="btn-primary" disabled={isActionLoading}>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={isActionLoading}
+                >
                   {isActionLoading ? "Saving..." : "Save Changes"}
                 </button>
                 <button

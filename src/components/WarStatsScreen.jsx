@@ -12,7 +12,9 @@ async function requestJson(url, options) {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || `The server returned HTTP ${response.status}.`);
+    throw new Error(
+      data.error || `The server returned HTTP ${response.status}.`,
+    );
   }
 
   return data;
@@ -58,27 +60,40 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
   }, []);
 
   const availableSaints = saints.filter(
-    (saint) => saint.status !== "Injured" && saint.status !== "On Mission"
+    (saint) => saint.status !== "Injured" && saint.status !== "On Mission",
   );
-  const totalWins = battles.filter((battle) => battle.result === "victory").length;
-  const totalLosses = battles.filter((battle) => battle.result === "defeat").length;
+  const totalWins = battles.filter(
+    (battle) => battle.result === "victory",
+  ).length;
+  const totalLosses = battles.filter(
+    (battle) => battle.result === "defeat",
+  ).length;
   const latestResult = battles[0]?.result;
-  const streakEnd = battles.findIndex((battle) => battle.result !== latestResult);
-  const currentStreak = !latestResult ? 0 : streakEnd < 0 ? battles.length : streakEnd;
+  const streakEnd = battles.findIndex(
+    (battle) => battle.result !== latestResult,
+  );
+  const currentStreak = !latestResult
+    ? 0
+    : streakEnd < 0
+      ? battles.length
+      : streakEnd;
 
   const startCampaign = async () => {
     setIsStarting(true);
     setError("");
 
     try {
-      const newCampaign = await requestJson(`${API_BASE_URL}/api/war/campaigns`, {
-        method: "POST",
-      });
+      const newCampaign = await requestJson(
+        `${API_BASE_URL}/api/war/campaigns`,
+        {
+          method: "POST",
+        },
+      );
       setCampaign(newCampaign);
       setCampaigns((previousCampaigns) => [
         newCampaign,
         ...previousCampaigns.filter(
-          (entry) => String(entry.id) !== String(newCampaign.id)
+          (entry) => String(entry.id) !== String(newCampaign.id),
         ),
       ]);
       setThreat(null);
@@ -101,7 +116,7 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ campaignId: campaign.id }),
-        }
+        },
       );
       setThreat(generatedThreat);
     } catch (requestError) {
@@ -126,13 +141,13 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ saintId, threat }),
-        }
+        },
       );
 
       setCampaign(result.campaign);
       setCampaigns((previousCampaigns) => {
         const campaignExists = previousCampaigns.some(
-          (entry) => String(entry.id) === String(result.campaign.id)
+          (entry) => String(entry.id) === String(result.campaign.id),
         );
 
         if (!campaignExists) {
@@ -140,18 +155,23 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
         }
 
         return previousCampaigns.map((entry) =>
-          String(entry.id) === String(result.campaign.id) ? result.campaign : entry
+          String(entry.id) === String(result.campaign.id)
+            ? result.campaign
+            : entry,
         );
       });
       setBattles((previousBattles) => [result.battle, ...previousBattles]);
       setLastBattle(result.battle);
       setSaints((previousSaints) =>
         previousSaints.map((saint) =>
-          String(saint.id) === String(result.saint.id) ? result.saint : saint
-        )
+          String(saint.id) === String(result.saint.id) ? result.saint : saint,
+        ),
       );
       setThreat(null);
-      if (result.campaign.status === "victory" || result.campaign.status === "defeat") {
+      if (
+        result.campaign.status === "victory" ||
+        result.campaign.status === "defeat"
+      ) {
         onCampaignEnd(result.campaign.status);
       }
     } catch (requestError) {
@@ -166,7 +186,9 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
   return (
     <main className="command-container war-screen">
       <div className="command-top-bar">
-        <button onClick={onBack} className="back-btn">← Sanctuary</button>
+        <button onClick={onBack} className="back-btn">
+          ← Sanctuary
+        </button>
         {campaign?.status === "active" ? (
           <GiveUp
             campaign={campaign}
@@ -180,13 +202,23 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
         <p>Defend Athena's Sanctuary in a finite campaign</p>
       </header>
 
-      {error ? <p className="war-error" role="alert">{error}</p> : null}
+      {error ? (
+        <p className="war-error" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       {isLoading ? (
-        <LoadingScreen message="Loading war records..." className="loading-screen-fill" />
+        <LoadingScreen
+          message="Loading war records..."
+          className="loading-screen-fill"
+        />
       ) : (
         <div className="war-content">
-          <section className="war-stat-grid" aria-label="All-time war statistics">
+          <section
+            className="war-stat-grid"
+            aria-label="All-time war statistics"
+          >
             <div className="form-card war-stat-card">
               <span>Total Battles</span>
               <strong>{battles.length}</strong>
@@ -201,23 +233,40 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
             </div>
             <div className="form-card war-stat-card">
               <span>Current Streak</span>
-              <strong>{currentStreak} {latestResult === "victory" ? "W" : latestResult === "defeat" ? "L" : ""}</strong>
+              <strong>
+                {currentStreak}{" "}
+                {latestResult === "victory"
+                  ? "W"
+                  : latestResult === "defeat"
+                    ? "L"
+                    : ""}
+              </strong>
             </div>
           </section>
 
           <section className="form-card war-campaign-card">
             <h2>Campaign</h2>
             {lastBattle ? (
-              <div className={`war-battle-report ${lastBattle.result === "victory" ? "war-victory-text" : "war-defeat-text"}`}>
-                <h3>{lastBattle.result === "victory" ? "⚔️ Battle Won!" : "💔 Battle Lost"}</h3>
+              <div
+                className={`war-battle-report ${lastBattle.result === "victory" ? "war-victory-text" : "war-defeat-text"}`}
+              >
+                <h3>
+                  {lastBattle.result === "victory"
+                    ? "Battle Won!"
+                    : "Battle Lost"}
+                </h3>
                 <p>Victory chance: {lastBattle.victoryChance}%</p>
                 {lastBattle.cosmosAwakened ? (
-                  <p className="war-cosmos-awakening">✨ COSMOS AWAKENING! The Saint turned the battle around!</p>
+                  <p className="war-cosmos-awakening">
+                    COSMOS AWAKENING! The Saint turned the battle around!
+                  </p>
                 ) : null}
                 <p>{lastBattle.explanation}</p>
                 <p>
                   Cosmos {lastBattle.cosmosPower}
-                  {lastBattle.cosmosAwakened ? ` → ${lastBattle.battleCosmosPower}` : ""}
+                  {lastBattle.cosmosAwakened
+                    ? ` → ${lastBattle.battleCosmosPower}`
+                    : ""}
                   {" vs. threat strength "}
                   {lastBattle.requiredCosmos}
                 </p>
@@ -234,7 +283,9 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                 </p>
                 {campaign.status === "active" ? (
                   <>
-                    <p>Battle {campaign.battles + 1} of 5 · Campaign in progress</p>
+                    <p>
+                      Battle {campaign.battles + 1} of 5 · Campaign in progress
+                    </p>
                     {!threat ? (
                       <button
                         type="button"
@@ -242,35 +293,50 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                         onClick={scanForThreat}
                         disabled={isScanning || availableSaints.length === 0}
                       >
-                        {isScanning ? "Scanning the Sanctuary..." : "🔍 Find Next Threat"}
+                        {isScanning
+                          ? "Scanning the Sanctuary..."
+                          : "Find Next Threat"}
                       </button>
                     ) : (
                       <div className="war-threat">
                         <div className="war-threat-summary">
-                          <h3>⚠️ {threat.enemy}</h3>
+                          <h3>{threat.enemy}</h3>
                           <p>
-                            <strong>Battle {threat.battleNumber} difficulty:</strong>{" "}
-                            Required Cosmos {threat.minimumThreatCosmos}–{threat.maximumThreatCosmos}
+                            <strong>
+                              Battle {threat.battleNumber} difficulty:
+                            </strong>{" "}
+                            Required Cosmos {threat.minimumThreatCosmos}–
+                            {threat.maximumThreatCosmos}
                           </p>
-                          <p><strong>Location:</strong> {threat.location}</p>
+                          <p>
+                            <strong>Location:</strong> {threat.location}
+                          </p>
                           <p>{threat.description}</p>
-                          <p><strong>Required Cosmos:</strong> {threat.requiredCosmos}</p>
+                          <p>
+                            <strong>Required Cosmos:</strong>{" "}
+                            {threat.requiredCosmos}
+                          </p>
                         </div>
                         {saints.length > 0 ? (
                           <>
                             <h4 className="war-saint-list-heading">
-                              Choose a Saint to deploy ({availableSaints.length} ready)
+                              Choose a Saint to deploy ({availableSaints.length}{" "}
+                              ready)
                             </h4>
                             <p className="war-odds-note">
-                              Victory chances depend on the Cosmos gap. A Saint with lower Cosmos has a 20% chance to awaken.
+                              Victory chances depend on the Cosmos gap. A Saint
+                              with lower Cosmos has a 20% chance to awaken.
                             </p>
                             <div className="war-saint-grid">
                               {saints.map((saint) => {
                                 const isAvailable =
-                                  saint.status !== "Injured" && saint.status !== "On Mission";
-                                const image = saint.image?.startsWith("http") || saint.image?.startsWith("/")
-                                  ? saint.image
-                                  : `/${saint.image || "Generic-Warrior-1.jpg"}`;
+                                  saint.status !== "Injured" &&
+                                  saint.status !== "On Mission";
+                                const image =
+                                  saint.image?.startsWith("http") ||
+                                  saint.image?.startsWith("/")
+                                    ? saint.image
+                                    : `/${saint.image || "Generic-Warrior-1.jpg"}`;
 
                                 return (
                                   <article
@@ -278,37 +344,51 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                                     className={`war-saint-card ${!isAvailable ? "war-saint-card-unavailable" : ""}`}
                                   >
                                     <div className="war-saint-info">
-                                      <img src={image} alt="" className="war-saint-image" />
-                                      <span className="war-saint-name">{saint.name}</span>
-                                      <span className="war-saint-rank">{saint.rank} Saint</span>
+                                      <img
+                                        src={image}
+                                        alt=""
+                                        className="war-saint-image"
+                                      />
+                                      <span className="war-saint-name">
+                                        {saint.name}
+                                      </span>
+                                      <span className="war-saint-rank">
+                                        {saint.rank} Saint
+                                      </span>
                                       <span className="war-saint-stat">
-                                        Armor: {saint.constellation || "Unknown"}
+                                        Armor:{" "}
+                                        {saint.constellation || "Unknown"}
                                       </span>
                                       <span className="war-saint-stat">
                                         Cosmos: {saint.cosmosPower || 100}
                                       </span>
-                                      <span className={`war-saint-status ${isAvailable ? "" : "war-defeat-text"}`}>
+                                      <span
+                                        className={`war-saint-status ${isAvailable ? "" : "war-defeat-text"}`}
+                                      >
                                         {saint.status || "Ready"}
                                       </span>
                                       <span className="war-saint-odds">
                                         Estimated win chance:{" "}
                                         {getEstimatedVictoryChance(
                                           saint.cosmosPower || 100,
-                                          threat.requiredCosmos
-                                        )}%
+                                          threat.requiredCosmos,
+                                        )}
+                                        %
                                       </span>
                                     </div>
                                     <button
                                       type="button"
                                       className="war-saint-deploy-button"
-                                      onClick={() => deploySaint(String(saint.id))}
+                                      onClick={() =>
+                                        deploySaint(String(saint.id))
+                                      }
                                       disabled={!isAvailable || isResolving}
                                     >
                                       {!isAvailable
                                         ? "Unavailable"
                                         : isResolving
                                           ? "Resolving battle..."
-                                          : "⚔️ Deploy Saint"}
+                                          : "Deploy Saint"}
                                     </button>
                                   </article>
                                 );
@@ -317,7 +397,8 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                           </>
                         ) : (
                           <p className="war-defeat-text">
-                            No Saints are in the roster yet. Add Saints before defending the Sanctuary.
+                            No Saints are in the roster yet. Add Saints before
+                            defending the Sanctuary.
                           </p>
                         )}
                         <button
@@ -332,13 +413,20 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                     )}
                     {availableSaints.length === 0 && !threat ? (
                       <p className="war-defeat-text">
-                        No Saints are ready. Return to the roster and recover or recall a Saint.
+                        No Saints are ready. Return to the roster and recover or
+                        recall a Saint.
                       </p>
                     ) : null}
                   </>
                 ) : (
-                  <div className={`war-campaign-result ${campaignWon ? "war-victory-text" : "war-defeat-text"}`}>
-                    <h3>{campaignWon ? "🏆 Sanctuary Saved!" : "💔 The Sanctuary Has Fallen"}</h3>
+                  <div
+                    className={`war-campaign-result ${campaignWon ? "war-victory-text" : "war-defeat-text"}`}
+                  >
+                    <h3>
+                      {campaignWon
+                        ? "Sanctuary Saved!"
+                        : "The Sanctuary Has Fallen"}
+                    </h3>
                     <p>
                       {campaignWon
                         ? "Your Saints won three battles and defended Athena's Sanctuary."
@@ -350,14 +438,19 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                       onClick={startCampaign}
                       disabled={isStarting || availableSaints.length === 0}
                     >
-                      {isStarting ? "Preparing campaign..." : "Start New Campaign"}
+                      {isStarting
+                        ? "Preparing campaign..."
+                        : "Start New Campaign"}
                     </button>
                   </div>
                 )}
               </>
             ) : (
               <>
-                <p>Win three battles before suffering three defeats to save the Sanctuary.</p>
+                <p>
+                  Win three battles before suffering three defeats to save the
+                  Sanctuary.
+                </p>
                 <button
                   type="button"
                   className="btn-primary war-action-button"
@@ -368,7 +461,8 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                 </button>
                 {availableSaints.length === 0 ? (
                   <p className="war-defeat-text">
-                    No Saints are ready to deploy. Recover or recall a Saint from the roster first.
+                    No Saints are ready to deploy. Recover or recall a Saint
+                    from the roster first.
                   </p>
                 ) : null}
               </>
@@ -378,27 +472,39 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
           <section className="form-card war-history-card">
             <h2>Battle History</h2>
             {battles.length === 0 ? (
-              <p>No battles recorded yet. Start a campaign to defend the Sanctuary.</p>
+              <p>
+                No battles recorded yet. Start a campaign to defend the
+                Sanctuary.
+              </p>
             ) : (
               <ol className="war-battle-list">
                 {battles.slice(0, 20).map((battle) => {
                   const saint = saints.find(
-                    (entry) => String(entry.id) === String(battle.saintId)
+                    (entry) => String(entry.id) === String(battle.saintId),
                   );
                   const relatedCampaign = campaigns.find(
-                    (entry) => String(entry.id) === String(battle.campaignId)
+                    (entry) => String(entry.id) === String(battle.campaignId),
                   );
-                  const saintName = saint?.name || battle.saintName || "Unknown Saint";
+                  const saintName =
+                    saint?.name || battle.saintName || "Unknown Saint";
                   const campaignSummary = relatedCampaign
                     ? `${relatedCampaign.status} · ${relatedCampaign.wins}W/${relatedCampaign.losses}L`
                     : "Campaign record unavailable";
 
                   return (
                     <li key={battle.id} className="war-battle-entry">
-                      <span className={battle.result === "victory" ? "war-victory-text" : "war-defeat-text"}>
+                      <span
+                        className={
+                          battle.result === "victory"
+                            ? "war-victory-text"
+                            : "war-defeat-text"
+                        }
+                      >
                         {battle.result === "victory" ? "VICTORY" : "DEFEAT"}
                       </span>
-                      <strong>{saintName} vs. {battle.enemy}</strong>
+                      <strong>
+                        {saintName} vs. {battle.enemy}
+                      </strong>
                       {saint ? (
                         <span className="war-battle-relation">
                           Saint record: {saint.rank || "Rank not recorded"}
@@ -411,18 +517,28 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                           : ""}
                       </span>
                       {battle.cosmosAwakened ? (
-                        <span className="war-cosmos-awakening">✨ Cosmos Awakening!</span>
+                        <span className="war-cosmos-awakening">
+                          Cosmos Awakening!
+                        </span>
                       ) : null}
                       <span>
                         {battle.location} · Cosmos {battle.cosmosPower}
-                        {battle.cosmosAwakened ? ` → ${battle.battleCosmosPower}` : ""}
+                        {battle.cosmosAwakened
+                          ? ` → ${battle.battleCosmosPower}`
+                          : ""}
                         /{battle.requiredCosmos}
                       </span>
                       {typeof battle.victoryChance === "number" ? (
-                        <span>Estimated win chance: {battle.victoryChance}%</span>
+                        <span>
+                          Estimated win chance: {battle.victoryChance}%
+                        </span>
                       ) : null}
-                      {battle.battleNumber ? <span>Campaign battle {battle.battleNumber}</span> : null}
-                      <small>{new Date(battle.createdAt).toLocaleString()}</small>
+                      {battle.battleNumber ? (
+                        <span>Campaign battle {battle.battleNumber}</span>
+                      ) : null}
+                      <small>
+                        {new Date(battle.createdAt).toLocaleString()}
+                      </small>
                     </li>
                   );
                 })}

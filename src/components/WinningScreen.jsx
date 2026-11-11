@@ -19,7 +19,6 @@ function WinningScreen({ onHome }) {
   return (
     <main className="command-container war-end-screen">
       <section className="form-card war-end-card war-end-victory">
-        <p className="war-end-symbol" aria-hidden="true">🏆</p>
         <h1>The Sanctuary Is Saved!</h1>
         <p>
           Your Saints defeated Hades' forces and protected Athena. Return home to

@@ -4,7 +4,7 @@ async function postToApi(path, body) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    ...(body ? { body: JSON.stringify(body) } : {})
+    ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const data = await response.json();
 
@@ -20,6 +20,11 @@ export async function fetchSanctuaryAlert() {
 }
 
 export async function generateSaintLore(saintName, rank, constellation) {
-  const data = await postToApi("/api/generate-lore", { saintName, rank, constellation });
+  const data = await postToApi("/api/generate-lore", {
+    saintName,
+    rank,
+    constellation,
+    isCustom: true,
+  });
   return data.lore;
 }

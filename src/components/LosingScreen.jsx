@@ -19,7 +19,6 @@ function LosingScreen({ onHome }) {
   return (
     <main className="command-container war-end-screen">
       <section className="form-card war-end-card war-end-defeat">
-        <p className="war-end-symbol" aria-hidden="true">💔</p>
         <h1>The Sanctuary Has Fallen</h1>
         <p>
           Hades' forces overwhelmed the Sanctuary. Return home to restore your
