@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import GiveUp from "./GiveUp";
 import LoadingScreen from "./LoadingScreen";
 import { getEstimatedVictoryChance } from "../assets/battleRules";
+import { getSaintImage } from "../assets/saintImages";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5005";
 const CAMPAIGN_WINS_TO_WIN = 3;
@@ -186,7 +187,7 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
   return (
     <main className="command-container war-screen">
       <div className="command-top-bar">
-        <button onClick={onBack} className="back-btn">
+        <button onClick={onBack} className="btn btn-primary btn-sm">
           ← Sanctuary
         </button>
         {campaign?.status === "active" ? (
@@ -198,8 +199,8 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
       </div>
 
       <header className="command-header">
-        <h1>War Records</h1>
-        <p>Defend Athena's Sanctuary in a finite campaign</p>
+        <h1>HOLY WAR</h1>
+        <p>Defend the Sanctuary and save the world and Athena!</p>
       </header>
 
       {error ? (
@@ -245,7 +246,7 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
           </section>
 
           <section className="form-card war-campaign-card">
-            <h2>Campaign</h2>
+            <h2>Holy War</h2>
             {lastBattle ? (
               <div
                 className={`war-battle-report ${lastBattle.result === "victory" ? "war-victory-text" : "war-defeat-text"}`}
@@ -284,12 +285,12 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                 {campaign.status === "active" ? (
                   <>
                     <p>
-                      Battle {campaign.battles + 1} of 5 · Campaign in progress
+                      Battle {campaign.battles + 1} of 5 · Holy War in progress
                     </p>
                     {!threat ? (
                       <button
                         type="button"
-                        className="btn-primary war-action-button"
+                        className="btn btn-primary war-action-button"
                         onClick={scanForThreat}
                         disabled={isScanning || availableSaints.length === 0}
                       >
@@ -320,47 +321,51 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                         {saints.length > 0 ? (
                           <>
                             <h4 className="war-saint-list-heading">
-                              Choose a Saint to deploy ({availableSaints.length}{" "}
-                              ready)
+                              Choose a Saint to send to Holy War
                             </h4>
                             <p className="war-odds-note">
                               Victory chances depend on the Cosmos gap. A Saint
-                              with lower Cosmos has a 20% chance to awaken.
+                              with lower Cosmos has a 20% chance to awaken their
+                              eighth sense!
                             </p>
                             <div className="war-saint-grid">
                               {saints.map((saint) => {
                                 const isAvailable =
                                   saint.status !== "Injured" &&
                                   saint.status !== "On Mission";
-                                const image =
-                                  saint.image?.startsWith("http") ||
-                                  saint.image?.startsWith("/")
-                                    ? saint.image
-                                    : `/${saint.image || "Generic-Warrior-1.jpg"}`;
+                                const image = getSaintImage(saint);
 
                                 return (
                                   <article
                                     key={saint.id}
-                                    className={`war-saint-card ${!isAvailable ? "war-saint-card-unavailable" : ""}`}
+                                    className={`form-card war-saint-card ${!isAvailable ? "war-saint-card-unavailable" : ""}`}
                                   >
-                                    <div className="war-saint-info">
+                                    <div className="war-saint-portrait-frame">
                                       <img
                                         src={image}
-                                        alt=""
-                                        className="war-saint-image"
+                                        alt={saint.name}
+                                        className="war-saint-image saint-cosmos-portrait"
                                       />
+                                    </div>
+                                    <div className="war-saint-info">
                                       <span className="war-saint-name">
                                         {saint.name}
                                       </span>
                                       <span className="war-saint-rank">
-                                        {saint.rank} Saint
+                                        {String(saint.rank || "Bronze").replace(
+                                          /(?:\s+Saint)+$/i,
+                                          "",
+                                        )}{" "}
+                                        Saint
                                       </span>
                                       <span className="war-saint-stat">
-                                        Armor:{" "}
                                         {saint.constellation || "Unknown"}
                                       </span>
                                       <span className="war-saint-stat">
-                                        Cosmos: {saint.cosmosPower || 100}
+                                        <strong className="saint-stat-label">
+                                          Cosmos:
+                                        </strong>{" "}
+                                        {saint.cosmosPower || 100}
                                       </span>
                                       <span
                                         className={`war-saint-status ${isAvailable ? "" : "war-defeat-text"}`}
@@ -378,7 +383,7 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                                     </div>
                                     <button
                                       type="button"
-                                      className="war-saint-deploy-button"
+                                      className="btn btn-primary war-saint-deploy-button"
                                       onClick={() =>
                                         deploySaint(String(saint.id))
                                       }
@@ -388,7 +393,7 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                                         ? "Unavailable"
                                         : isResolving
                                           ? "Resolving battle..."
-                                          : "Deploy Saint"}
+                                          : "SEND TO DEFEND"}
                                     </button>
                                   </article>
                                 );
@@ -401,14 +406,6 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                             defending the Sanctuary.
                           </p>
                         )}
-                        <button
-                          type="button"
-                          className="btn-secondary war-action-button"
-                          onClick={() => setThreat(null)}
-                          disabled={isResolving}
-                        >
-                          Cancel threat
-                        </button>
                       </div>
                     )}
                     {availableSaints.length === 0 && !threat ? (
@@ -434,7 +431,7 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
                     </p>
                     <button
                       type="button"
-                      className="btn-primary war-action-button"
+                      className="btn btn-primary war-action-button"
                       onClick={startCampaign}
                       disabled={isStarting || availableSaints.length === 0}
                     >
@@ -448,16 +445,16 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
             ) : (
               <>
                 <p>
-                  Win three battles before suffering three defeats to save the
-                  Sanctuary.
+                  Win three battles before suffering three defeats to save
+                  Athena and the world!
                 </p>
                 <button
                   type="button"
-                  className="btn-primary war-action-button"
+                  className="btn btn-primary war-action-button"
                   onClick={startCampaign}
                   disabled={isStarting || availableSaints.length === 0}
                 >
-                  {isStarting ? "Preparing campaign..." : "Start Campaign"}
+                  {isStarting ? "Preparing campaign..." : "START HOLY WAR"}
                 </button>
                 {availableSaints.length === 0 ? (
                   <p className="war-defeat-text">
@@ -473,72 +470,67 @@ function WarStatsScreen({ saints, setSaints, onBack, onCampaignEnd }) {
             <h2>Battle History</h2>
             {battles.length === 0 ? (
               <p>
-                No battles recorded yet. Start a campaign to defend the
-                Sanctuary.
+                No battles recorded yet. Start a Holy War to defend Athena and
+                the World.
               </p>
             ) : (
               <ol className="war-battle-list">
                 {battles.slice(0, 20).map((battle) => {
-                  const saint = saints.find(
-                    (entry) => String(entry.id) === String(battle.saintId),
-                  );
-                  const relatedCampaign = campaigns.find(
-                    (entry) => String(entry.id) === String(battle.campaignId),
-                  );
+                  const isVictory = battle.result === "victory";
                   const saintName =
-                    saint?.name || battle.saintName || "Unknown Saint";
-                  const campaignSummary = relatedCampaign
-                    ? `${relatedCampaign.status} · ${relatedCampaign.wins}W/${relatedCampaign.losses}L`
-                    : "Campaign record unavailable";
+                    battle.saintName ||
+                    saints.find(
+                      (entry) => String(entry.id) === String(battle.saintId),
+                    )?.name ||
+                    "Your Saint";
+                  const opponent = battle.enemy || "the threat";
+                  const hasCosmosComparison =
+                    Number.isFinite(battle.cosmosPower) &&
+                    Number.isFinite(battle.requiredCosmos);
+                  const estimatedChance =
+                    typeof battle.victoryChance === "number"
+                      ? ` Estimated win chance: ${battle.victoryChance}%.`
+                      : "";
+                  const battleReason = battle.cosmosAwakened
+                    ? `Cosmos awakened to ${battle.battleCosmosPower}, overcoming the threat.`
+                    : hasCosmosComparison
+                      ? `${saintName} had ${battle.cosmosPower} Cosmos; the threat required ${battle.requiredCosmos}.${estimatedChance}`
+                      : battle.explanation || "The battle was hard-fought.";
+                  const battleDate = new Date(battle.createdAt);
+                  const battleMeta = [
+                    battle.location,
+                    battle.battleNumber ? `Battle ${battle.battleNumber}` : null,
+                    Number.isNaN(battleDate.getTime())
+                      ? null
+                      : battleDate.toLocaleDateString(),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ");
 
                   return (
                     <li key={battle.id} className="war-battle-entry">
-                      <span
-                        className={
-                          battle.result === "victory"
-                            ? "war-victory-text"
-                            : "war-defeat-text"
-                        }
-                      >
-                        {battle.result === "victory" ? "VICTORY" : "DEFEAT"}
-                      </span>
-                      <strong>
-                        {saintName} vs. {battle.enemy}
-                      </strong>
-                      {saint ? (
-                        <span className="war-battle-relation">
-                          Saint record: {saint.rank || "Rank not recorded"}
-                        </span>
-                      ) : null}
-                      <span>
-                        Campaign: {campaignSummary}
-                        {relatedCampaign?.createdAt
-                          ? ` · started ${new Date(relatedCampaign.createdAt).toLocaleDateString()}`
-                          : ""}
-                      </span>
-                      {battle.cosmosAwakened ? (
-                        <span className="war-cosmos-awakening">
-                          Cosmos Awakening!
-                        </span>
-                      ) : null}
-                      <span>
-                        {battle.location} · Cosmos {battle.cosmosPower}
-                        {battle.cosmosAwakened
-                          ? ` → ${battle.battleCosmosPower}`
-                          : ""}
-                        /{battle.requiredCosmos}
-                      </span>
-                      {typeof battle.victoryChance === "number" ? (
+                      <div className="war-battle-heading">
+                        <strong
+                          className={
+                            isVictory
+                              ? "war-victory-text"
+                              : "war-defeat-text"
+                          }
+                        >
+                          {isVictory ? "Victory" : "Defeat"}
+                        </strong>
                         <span>
-                          Estimated win chance: {battle.victoryChance}%
+                          {isVictory
+                            ? `${saintName} defeated ${opponent}.`
+                            : `${saintName} was defeated by ${opponent} and injured.`}
                         </span>
+                      </div>
+                      <p className="war-battle-reason">
+                        <strong>Why:</strong> {battleReason}
+                      </p>
+                      {battleMeta ? (
+                        <small className="war-battle-meta">{battleMeta}</small>
                       ) : null}
-                      {battle.battleNumber ? (
-                        <span>Campaign battle {battle.battleNumber}</span>
-                      ) : null}
-                      <small>
-                        {new Date(battle.createdAt).toLocaleString()}
-                      </small>
                     </li>
                   );
                 })}

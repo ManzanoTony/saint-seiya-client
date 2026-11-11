@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { generateSaintLore } from "../assets/gemini";
 import { requestApi } from "../assets/api";
+import { getCustomSaintImage, getSaintImage } from "../assets/saintImages";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5005";
 const API_URL = `${API_BASE_URL}/saints`;
@@ -20,6 +21,7 @@ function SaintDetailScreen({
   onUpdateSaint,
   onDeleteSaint,
 }) {
+  const canEdit = saint.isCustom === true;
   const [currentTime, setCurrentTime] = useState(0);
   const [comments, setComments] = useState(saint.comments || "");
   const [lore, setLore] = useState("");
@@ -35,7 +37,6 @@ function SaintDetailScreen({
 
   const [formData, setFormData] = useState(() => ({
     rank: saint.rank ? saint.rank.replace(" Saint", "") : "Bronze",
-    status: saint.status || "Active",
   }));
 
   useEffect(() => {
@@ -58,7 +59,7 @@ function SaintDetailScreen({
       return;
     }
 
-    if (saint.isCustom === false) {
+    if (!canEdit) {
       setLore(saint.lore || "Manga canon history recording...");
       setShowLore(true);
       return;
@@ -122,6 +123,7 @@ function SaintDetailScreen({
         "Could not save Sanctuary notes.",
       );
       onUpdateSaint(updated);
+      setComments(updated.comments ?? comments);
     } catch (err) {
       console.error("Error saving comments:", err);
       setCommentsError(err.message);
@@ -132,25 +134,19 @@ function SaintDetailScreen({
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
+    if (!canEdit) {
+      return;
+    }
+
     setIsActionLoading(true);
     setActionMessage("Saving warrior changes...");
     setActionError("");
 
     const newRankFull = `${formData.rank} Saint`;
-    const statusToSave =
-      saint.status === "Injured"
-        ? "Injured"
-        : formData.status === "Injured"
-          ? saint.status
-          : formData.status;
     const hiddenCosmosPower =
       formData.rank === "Gold" ? 250 : formData.rank === "Silver" ? 160 : 115;
     const newImage = saint.isCustom
-      ? formData.rank === "Gold"
-        ? "/Saga.png"
-        : formData.rank === "Silver"
-          ? "/Marin.png"
-          : "/Seiya.png"
+      ? getCustomSaintImage(saint.gender)
       : saint.image;
 
     try {
@@ -179,10 +175,10 @@ function SaintDetailScreen({
             rank: newRankFull,
             constellation: saint.constellation,
             cosmosPower: hiddenCosmosPower,
-            status: statusToSave,
+            status: saint.status || "Active",
             image: newImage,
             gender: saint.gender,
-            comments: comments,
+            comments: saint.comments || "",
             lore: updatedLore,
             isCustom: saint.isCustom,
           }),
@@ -203,6 +199,10 @@ function SaintDetailScreen({
   };
 
   const handleDelete = async () => {
+    if (!canEdit) {
+      return;
+    }
+
     const confirmed = window.confirm(
       `Are you sure you want to send ${saint.name} to rest in peace?`,
     );
@@ -230,9 +230,9 @@ function SaintDetailScreen({
   };
 
   return (
-    <div className="command-container">
+    <div className="command-container saint-detail-screen">
       <div className="command-top-bar" style={{ justifyContent: "flex-start" }}>
-        <button onClick={onBack} className="back-btn" style={{ margin: 0 }}>
+        <button onClick={onBack} className="btn btn-primary btn-sm">
           ← Back to Roster
         </button>
       </div>
@@ -253,220 +253,158 @@ function SaintDetailScreen({
         </p>
       ) : null}
 
-      {/* Scrollable Content Wrapper with Always-Reserved Scrollbar Space */}
-      <div className="saint-detail-content">
-        {isActionLoading ? (
-          <div
-            className="form-card"
-            style={{
-              textAlign: "center",
-              borderColor: "#66fcf1",
-              marginBottom: "15px",
-            }}
-          >
-            <p
-              style={{
-                color: "#66fcf1",
-                fontWeight: "bold",
-                margin: "0 0 5px 0",
-              }}
-            >
-              ⏳ {actionMessage}
-            </p>
-            <p style={{ fontSize: "0.8rem", color: "#c5c6c7", margin: 0 }}>
-              Please wait, contacting the server...
-            </p>
-          </div>
-        ) : null}
-
-        <div
-          className="form-card saint-heading-card"
-          style={{ textAlign: "center", marginBottom: "15px" }}
-        >
-          <h2 style={{ color: "#66fcf1", margin: "0 0 5px 0" }}>
-            {saint.name}
-          </h2>
-          <span
-            style={{
-              background: "#45a29e",
-              color: "#0b0c10",
-              padding: "4px 12px",
-              borderRadius: "12px",
-              fontWeight: "bold",
-              fontSize: "0.85rem",
-            }}
-          >
-            {saint.rank}
-          </span>
+      {isActionLoading ? (
+        <div className="form-card saint-action-status" role="status">
+          <p>⏳ {actionMessage}</p>
+          <p>Please wait, contacting the server...</p>
         </div>
+      ) : null}
 
-        <div
-          className="form-card saint-stats-card"
-          style={{ marginBottom: "15px" }}
-        >
-          <div style={{ textAlign: "center", marginBottom: "15px" }}>
-            <img
-              src={
-                saint.image?.startsWith("http") || saint.image?.startsWith("/")
-                  ? saint.image
-                  : `/${saint.image ? saint.image : "Generic-Warrior-1.jpg"}`
-              }
-              alt={saint.name}
-              style={{
-                maxHeight: "180px",
-                width: "100%",
-                objectFit: "contain",
-                borderRadius: "8px",
-                background: "#0b0c10",
-                padding: "5px",
-              }}
-            />
+      <div className="saint-detail-content">
+        <section className="saint-detail-profile" aria-label="Saint profile">
+          <div className="form-card saint-heading-card">
+            <h2>{saint.name}</h2>
+            <span
+              className={`saint-rank-label saint-rank-${(saint.rank || "bronze").toLowerCase().split(" ")[0]}`}
+            >
+              {saint.rank}
+            </span>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-              color: "#c5c6c7",
-              fontSize: "0.9rem",
-            }}
-          >
-            <div>
-              <strong>Armor / Constellation:</strong> {saint.constellation}
+          <div className="form-card saint-stats-card">
+            <div className="saint-detail-portrait-frame">
+              <img
+                src={getSaintImage(saint)}
+                alt={saint.name}
+                className="saint-detail-portrait saint-cosmos-portrait"
+              />
             </div>
-            <div>
-              <strong>Cosmos Power:</strong>{" "}
-              <span style={{ color: "#66fcf1", fontWeight: "bold" }}>
-                {saint.cosmosPower ? saint.cosmosPower : "N/A"}
-              </span>
-            </div>
-            <div>
-              <strong>Status:</strong>{" "}
-              <span
-                style={{
-                  color: saint.status === "Injured" ? "#ff4d4d" : "#66fcf1",
-                  fontWeight: "bold",
-                }}
-              >
-                {saint.status}
-              </span>
-              {saint.status === "Injured" && recoveryMilliseconds !== null ? (
-                <span className="saint-recovery-time">
-                  {recoveryMilliseconds > 0
-                    ? ` · Healing: ${formatRecoveryTime(recoveryMilliseconds)}`
-                    : " · Recovery complete"}
+
+            <div className="saint-detail-stats">
+              <div>
+                <strong className="saint-stat-label">
+                  Constellation:
+                </strong>{" "}
+                {saint.constellation}
+              </div>
+              <div>
+                <strong className="saint-stat-label">Cosmos Power:</strong>{" "}
+                <span style={{ color: "var(--gold)", fontWeight: "bold" }}>
+                  {saint.cosmosPower ? saint.cosmosPower : "N/A"}
                 </span>
+              </div>
+              {saint.status && saint.status !== "Ready" ? (
+                <div>
+                  <strong className="saint-stat-label">Status:</strong>{" "}
+                  <span
+                    style={{
+                      color:
+                        saint.status === "Injured"
+                          ? "var(--danger)"
+                          : "var(--silver-bright)",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {saint.status}
+                  </span>
+                  {saint.status === "Injured" &&
+                  recoveryMilliseconds !== null ? (
+                    <span className="saint-recovery-time">
+                      {recoveryMilliseconds > 0
+                        ? ` · Healing: ${formatRecoveryTime(recoveryMilliseconds)}`
+                        : " · Recovery complete"}
+                    </span>
+                  ) : null}
+                </div>
               ) : null}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Stable-width Lore & History Card */}
-        <div className="form-card saint-lore-card">
-          <div className="saint-lore-header">
-            <h4 style={{ color: "#66fcf1", margin: 0 }}>
-              Saint Lore & History
-            </h4>
-            <button
-              onClick={handleGenerateLore}
-              className="btn-edit"
-              disabled={isGeneratingLore}
-              style={{ fontSize: "0.75rem", padding: "4px 8px" }}
-            >
-              {isGeneratingLore
-                ? "Consulting..."
-                : saint.isCustom === false
-                  ? showLore
-                    ? "Hide Canon"
-                    : "View Canon"
-                  : showLore
-                    ? "Hide Lore"
-                    : "Reveal Lore"}
-            </button>
-          </div>
-
-          {isGeneratingLore ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "15px 0",
-                color: "#66fcf1",
-                marginTop: "8px",
-              }}
-            >
-              <p style={{ fontWeight: "bold", margin: "0 0 4px 0" }}>
-                Consulting the Groq Sanctuary Oracle...
-              </p>
-              <p style={{ fontSize: "0.80rem", color: "#c5c6c7", margin: 0 }}>
-                Reading constellation memories from ancient history...
-              </p>
+        <section className="saint-detail-records" aria-label="Saint lore and notes">
+          <div className="form-card saint-lore-card">
+            <div className="saint-lore-header">
+              <h4 style={{ color: "var(--gold)", margin: 0 }}>
+                Saint Lore & History
+              </h4>
+              <button
+                onClick={handleGenerateLore}
+                className="btn btn-accent btn-sm"
+                disabled={isGeneratingLore}
+                style={{ fontSize: "0.95rem", padding: "4px 8px" }}
+              >
+                {isGeneratingLore
+                  ? "Consulting..."
+                  : !canEdit
+                    ? showLore
+                      ? "Hide Canon"
+                      : "View Canon"
+                    : showLore
+                      ? "Hide Lore"
+                      : "Reveal Lore"}
+              </button>
             </div>
-          ) : showLore && (lore || saint.lore) ? (
-            <p className="saint-lore-text">"{lore || saint.lore}"</p>
-          ) : null}
 
-          {loreError ? (
-            <p
-              role="alert"
-              style={{
-                color: "#ff8080",
-                fontSize: "0.85rem",
-                margin: "8px 0 0",
-              }}
-            >
-              {loreError}
-            </p>
-          ) : null}
-        </div>
+            {isGeneratingLore ? (
+              <div className="saint-lore-loading">
+                <p>Consulting the Groq Sanctuary Oracle...</p>
+                <p>Reading constellation memories from ancient history...</p>
+              </div>
+            ) : showLore && (lore || saint.lore) ? (
+              <p className="saint-lore-text">"{lore || saint.lore}"</p>
+            ) : null}
 
-        <div
-          className="form-card saint-notes-card"
-          style={{
-            marginBottom: "10px",
-            boxSizing: "border-box",
-            width: "100%",
-          }}
-        >
-          <h4 style={{ color: "#45a29e", margin: "0 0 8px 0" }}>
-            Sanctuary Notes & Tactical Comments
-          </h4>
-          <textarea
-            rows="3"
-            placeholder="Type notes or strategy for this warrior..."
-            value={comments}
-            onChange={(e) => {
-              setComments(e.target.value);
-              setCommentsError("");
-            }}
-            onBlur={handleSaveComments}
-            className="form-input"
-            style={{
-              width: "100%",
-              resize: "vertical",
-              fontFamily: "inherit",
-              boxSizing: "border-box",
-            }}
-          />
-          <div
-            style={{
-              fontSize: "0.75rem",
-              color: "#45a29e",
-              marginTop: "4px",
-              textAlign: "right",
-            }}
-          >
-            {isSavingComments ? (
-              "Saving notes..."
-            ) : commentsError ? (
-              <span className="request-error-text" role="alert">
-                {commentsError}
-              </span>
-            ) : (
-              "Saves automatically when clicking outside text box"
-            )}
+            {loreError ? (
+              <p className="saint-lore-error" role="alert">
+                {loreError}
+              </p>
+            ) : null}
           </div>
-        </div>
+
+          <div className="form-card saint-notes-card">
+            <h4 style={{ color: "var(--bronze-bright)", margin: "0 0 8px 0" }}>
+              Sanctuary Notes & Tactical Comments
+            </h4>
+            <textarea
+              rows="3"
+              placeholder="Type notes or strategy for this warrior..."
+              value={comments}
+              onChange={(e) => {
+                setComments(e.target.value);
+                setCommentsError("");
+              }}
+              disabled={isSavingComments}
+              className="form-input saint-notes-input"
+            />
+            <div className="saint-notes-actions">
+              <div
+                className="saint-notes-status"
+                role="status"
+                aria-live="polite"
+              >
+                {isSavingComments ? (
+                  "Saving notes..."
+                ) : commentsError ? (
+                  <span className="request-error-text" role="alert">
+                    {commentsError}
+                  </span>
+                ) : comments !== (saint.comments || "") ? (
+                  "Unsaved changes"
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveComments}
+                className="btn btn-primary btn-sm"
+                disabled={
+                  isSavingComments || comments === (saint.comments || "")
+                }
+              >
+                {isSavingComments ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* Pinned Bottom Navigation Action Bar */}
@@ -474,46 +412,49 @@ function SaintDetailScreen({
         className="command-bottom-nav saint-detail-actions"
         style={{ marginTop: "auto", paddingTop: "5px" }}
       >
-        <button
-          onClick={() => {
-            setFormData({
-              rank: saint.rank ? saint.rank.replace(" Saint", "") : "Bronze",
-              status: saint.status || "Active",
-            });
-            setShowEditModal(true);
-          }}
-          className="nav-pill-btn saint-edit-button"
-          disabled={isActionLoading}
-        >
-          Edit
-        </button>
-
-        {saint.isCustom ? (
+        {canEdit ? (
           <button
-            onClick={handleDelete}
-            className="nav-pill-btn"
-            style={{ borderColor: "#ff4d4d", color: "#ff4d4d" }}
+            type="button"
+            onClick={() => {
+              setFormData({
+                rank: saint.rank ? saint.rank.replace(" Saint", "") : "Bronze",
+              });
+              setShowEditModal(true);
+            }}
+            className="btn btn-primary btn-sm"
             disabled={isActionLoading}
           >
-            Send to Rest in Peace
+            Edit
+          </button>
+        ) : null}
+
+        {canEdit ? (
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="btn btn-danger btn-sm"
+            disabled={isActionLoading}
+          >
+            RIP
           </button>
         ) : null}
       </div>
 
-      {showEditModal ? (
+      {showEditModal && canEdit ? (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3 style={{ color: "#45a29e", marginTop: 0 }}>
-              Edit Warrior Rank & Status
+            <h3 style={{ color: "var(--bronze-bright)", marginTop: 0 }}>
+              Edit Warrior Rank
             </h3>
             <form onSubmit={handleSaveEdit} className="form-grid">
               <div>
                 <label
                   style={{
-                    fontSize: "0.75rem",
-                    color: "#c5c6c7",
+                    fontSize: "1rem",
+                    color: "var(--silver)",
                     display: "block",
                     marginBottom: "4px",
+                    fontWeight: 600,
                   }}
                 >
                   Rank:
@@ -532,50 +473,10 @@ function SaintDetailScreen({
                 </select>
               </div>
 
-              <div>
-                <label
-                  style={{
-                    fontSize: "0.75rem",
-                    color: "#c5c6c7",
-                    display: "block",
-                    marginBottom: "4px",
-                  }}
-                >
-                  Status:
-                </label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData({ ...formData, status: e.target.value })
-                  }
-                  className="form-input"
-                  disabled={isActionLoading || saint.status === "Injured"}
-                >
-                  <option value="Active">Active</option>
-                  <option value="Ready">Ready</option>
-                  {saint.status === "Injured" ? (
-                    <option value="Injured">Injured (Healing)</option>
-                  ) : (
-                    <option value="Injured">Injured (1 minute recovery)</option>
-                  )}
-                  <option value="On Mission">On Mission</option>
-                </select>
-                {saint.status === "Injured" ? (
-                  <p className="saint-recovery-help">
-                    {recoveryMilliseconds === null
-                      ? "This Saint is healing."
-                      : recoveryMilliseconds > 0
-                        ? `Healing — Ready in ${formatRecoveryTime(recoveryMilliseconds)}.`
-                        : "Recovery is complete. The Saint will be Ready shortly."}
-                  </p>
-                ) : null}
-              </div>
-
               <div className="form-buttons" style={{ marginTop: "15px" }}>
                 <button
                   type="submit"
-                  className="btn-primary"
+                  className="btn btn-primary"
                   disabled={isActionLoading}
                 >
                   {isActionLoading ? "Saving..." : "Save Changes"}
@@ -583,7 +484,7 @@ function SaintDetailScreen({
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="btn-secondary"
+                  className="btn btn-secondary"
                   disabled={isActionLoading}
                 >
                   Cancel

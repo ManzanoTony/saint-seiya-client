@@ -1,8 +1,48 @@
-@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
+@config "../tailwind.config.js";
+
+@plugin "daisyui" {
+  themes: sanctuary --default;
+}
+
+@plugin "daisyui/theme" {
+  name: "sanctuary";
+  default: true;
+  color-scheme: dark;
+
+  --color-base-100: #080d1b;
+  --color-base-200: #111a2d;
+  --color-base-300: #26334b;
+  --color-base-content: #f5f0e5;
+  --color-primary: #e7c77a;
+  --color-primary-content: #171521;
+  --color-secondary: #b87842;
+  --color-secondary-content: #171521;
+  --color-accent: #cbd4e2;
+  --color-accent-content: #111827;
+  --color-neutral: #24304a;
+  --color-neutral-content: #e9edf5;
+  --color-info: #9fc2e8;
+  --color-info-content: #111827;
+  --color-success: #8ed3b0;
+  --color-success-content: #10251c;
+  --color-warning: #e7c77a;
+  --color-warning-content: #171521;
+  --color-error: #ff777c;
+  --color-error-content: #2a1019;
+  --radius-selector: 0.75rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1.125rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
 
 :root {
-  font-family: "Manrope", "Segoe UI", sans-serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   color: #f5f0e5;
   background: #080d1b;
   font-synthesis: none;
@@ -15,9 +55,14 @@
   --gold: #e7c77a;
   --gold-bright: #ffe6a3;
   --gold-muted: #a88c51;
+  --bronze: #b87842;
+  --bronze-bright: #d7a06c;
+  --silver: #cbd4e2;
+  --silver-bright: #edf2fa;
   --ivory: #f5f0e5;
   --muted: #b7c0d0;
-  --line: rgba(231, 199, 122, 0.2);
+  --line: rgba(203, 212, 226, 0.18);
+  --gold-line: rgba(231, 199, 122, 0.32);
   --danger: #ff777c;
   --success: #8ed3b0;
   color-scheme: dark;
@@ -30,6 +75,7 @@
 html {
   min-width: 320px;
   min-height: 100%;
+  font-size: 120%;
   background: var(--night);
 }
 
@@ -37,12 +83,27 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.5;
   background:
     radial-gradient(ellipse at 50% -18%, rgba(86, 107, 151, 0.3), transparent 48%),
     radial-gradient(circle at 8% 30%, rgba(111, 82, 34, 0.1), transparent 25%),
     radial-gradient(circle at 90% 78%, rgba(40, 82, 119, 0.12), transparent 28%),
     var(--night);
   background-attachment: fixed;
+}
+
+body:has(.landing-screen) {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#root:has(.landing-screen),
+.app-container:has(.landing-screen) {
+  height: 100%;
+  min-height: 0;
 }
 
 body::before {
@@ -65,8 +126,10 @@ textarea {
   font: inherit;
 }
 
-button {
+button,
+.btn {
   color: inherit;
+  text-transform: uppercase;
 }
 
 button:focus-visible,
@@ -87,7 +150,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: "Cinzel", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   letter-spacing: 0.035em;
 }
 
@@ -96,21 +159,135 @@ p {
 }
 
 .app-container {
+  position: relative;
   min-height: 100vh;
+}
+
+.music-control-dock {
+  position: absolute;
+  z-index: 1000;
+  top: max(12px, env(safe-area-inset-top));
+  right: 12px;
+}
+
+.music-control-toggle {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  color: var(--gold-bright);
+  cursor: pointer;
+}
+
+.music-control-toggle:hover {
+  color: #fff0c1;
+  filter: drop-shadow(0 0 5px rgba(231, 199, 122, 0.7));
+}
+
+.music-control-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.music-control-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  align-items: center;
+  display: grid;
+  width: 240px;
+  height: 124px;
+  grid-template-rows: 1fr 22px 34px;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--gold-line);
+  border-radius: 12px;
+  background: rgba(13, 21, 38, 0.96);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  color: var(--silver-bright);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.music-control-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.music-control-panel-heading label {
+  color: var(--gold-bright);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.music-volume-slider {
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--gold-bright);
+  cursor: pointer;
+}
+
+.music-volume-value {
+  min-width: 4ch;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.music-control-panel .music-mute-button {
+  min-height: 32px;
+  min-width: 88px;
+  justify-self: end;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .music-control-panel {
+    width: 220px;
+    height: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .music-control-panel {
+    width: min(212px, calc(100vw - 24px));
+    height: 116px;
+    grid-template-rows: 1fr 20px 32px;
+    gap: 5px;
+    padding: 10px;
+  }
 }
 
 .landing-screen {
   display: grid;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
   place-items: center;
-  padding: clamp(20px, 5vw, 64px);
+  overflow: hidden;
+  padding: clamp(8px, 2vh, 20px) clamp(12px, 5vw, 64px);
 }
 
 .landing-card {
   position: relative;
+  display: flex;
   width: min(100%, 920px);
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  justify-content: flex-start;
   overflow: hidden;
-  padding: clamp(24px, 5vw, 58px);
+  padding: clamp(14px, 3vh, 34px) clamp(20px, 5vw, 58px);
   border: 1px solid rgba(231, 199, 122, 0.36);
   border-radius: 30px;
   background:
@@ -144,59 +321,112 @@ p {
 }
 
 .landing-hero {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: clamp(16px, 4vw, 42px);
+  padding-top: clamp(8px, 1.5vh, 16px);
+  margin-bottom: clamp(10px, 2vh, 20px);
+}
+
+.landing-content {
   display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(16px, 4vw, 42px);
-  margin-bottom: 26px;
+  width: 100%;
+  text-align: center;
+}
+
+.landing-portrait-frame {
+  position: relative;
+  width: clamp(110px, 21vw, 190px);
+  height: clamp(120px, 24vh, 220px);
+}
+
+.landing-portrait-frame::before {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: 145%;
+  aspect-ratio: 1;
+  background: url("/cosmos.gif") center / cover no-repeat;
+  content: "";
+  opacity: 0.7;
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(circle, #000 25%, rgba(0, 0, 0, 0.7) 55%, transparent 75%);
+  mask-image: radial-gradient(circle, #000 25%, rgba(0, 0, 0, 0.7) 55%, transparent 75%);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.landing-portrait-frame:first-child {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: center;
+}
+
+.landing-portrait-frame:nth-child(2) {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
 }
 
 .landing-portrait {
-  width: clamp(110px, 21vw, 190px);
-  height: clamp(140px, 27vw, 230px);
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 0 24px rgba(231, 199, 122, 0.28));
+  filter: none;
+}
+
+.landing-hero-copy {
+  min-width: 0;
+  width: 100%;
+  text-align: center;
 }
 
 .landing-title {
   max-width: 510px;
-  margin: 0;
+  margin: 0 auto;
   color: var(--gold-bright);
-  font-size: clamp(1.7rem, 4.2vw, 3.2rem);
-  line-height: 1.2;
+  font-size: clamp(1.15rem, 2.1vw, 1.8rem);
+  line-height: 1.15;
   text-shadow: 0 0 28px rgba(231, 199, 122, 0.16);
+  text-align: center;
 }
 
-.landing-eyebrow,
+.landing-title span {
+  display: block;
+  white-space: nowrap;
+}
+
 .eyebrow {
   margin: 0 0 10px;
   color: var(--gold);
-  font-size: 0.72rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  letter-spacing: 0.16em;
 }
 
 .landing-copy {
+  width: 100%;
   max-width: 650px;
-  margin: 0 auto;
-  color: var(--muted);
-}
-
-.landing-copy h2 {
-  margin: 0 0 12px;
-  color: var(--gold);
-  font-size: clamp(1.2rem, 2.5vw, 1.65rem);
+  margin: clamp(10px, 2vh, 24px) auto 0;
+  color: var(--gold-bright);
+  text-align: center;
 }
 
 .landing-copy p {
   margin: 8px 0;
-}
-
-.landing-copy .landing-hint {
-  margin-top: 20px;
-  color: #d7cba9;
-  font-size: 0.85rem;
+  text-align: center;
 }
 
 .landing-actions {
@@ -204,95 +434,136 @@ p {
   flex-wrap: wrap;
   justify-content: center;
   gap: 14px;
-  margin-top: 30px;
+  margin-top: auto;
+  margin-bottom: clamp(8px, 2vh, 20px);
 }
 
 .landing-actions .btn {
   min-width: min(100%, 210px);
 }
 
-.btn,
-.btn-primary,
-.btn-secondary,
-.btn-edit,
-.back-btn,
-.give-up-button,
-.war-saint-deploy-button {
+.btn {
+  --button-sheen: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.035) 48%,
+    transparent
+  );
+
   display: inline-flex;
   min-height: 42px;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 10px 18px;
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.055);
-  color: var(--ivory);
+  background: var(--button-sheen), rgba(255, 255, 255, 0.08);
+  color: var(--silver-bright);
   cursor: pointer;
   font-weight: 700;
+  letter-spacing: 0.015em;
   text-decoration: none;
-  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.25),
+    inset 0 -1px rgba(0, 0, 0, 0.2),
+    0 6px 16px rgba(0, 0, 0, 0.16);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease;
 }
 
-.btn:hover:not(:disabled),
-.btn-primary:hover:not(:disabled),
-.btn-secondary:hover:not(:disabled),
-.btn-edit:hover:not(:disabled),
-.back-btn:hover:not(:disabled),
-.give-up-button:hover:not(:disabled),
-.war-saint-deploy-button:hover:not(:disabled) {
+.btn:hover:not(:disabled) {
   transform: translateY(-2px);
+  filter: brightness(1.08);
 }
 
-.btn-warning,
-.btn-primary,
-.war-saint-deploy-button {
-  border-color: rgba(231, 199, 122, 0.65);
-  background: linear-gradient(135deg, #f3d996, #c79c4f);
-  box-shadow: 0 8px 24px rgba(177, 130, 45, 0.18);
-  color: #171521;
+.btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
-.btn-warning:hover:not(:disabled),
-.btn-primary:hover:not(:disabled),
-.war-saint-deploy-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ffe9ab, #d6ad61);
-  box-shadow: 0 10px 28px rgba(177, 130, 45, 0.3);
-}
-
-.btn-outline,
-.btn-ghost,
-.btn-secondary,
-.back-btn {
-  border-color: rgba(231, 199, 122, 0.28);
-  background: rgba(12, 19, 34, 0.35);
+.btn-primary {
+  border-color: rgba(231, 199, 122, 0.62);
+  background:
+    var(--button-sheen),
+    linear-gradient(
+      135deg,
+      rgba(231, 199, 122, 0.38),
+      rgba(199, 156, 79, 0.3)
+  );
+  box-shadow:
+    inset 0 1px rgba(255, 246, 210, 0.3),
+    inset 0 -1px rgba(99, 69, 26, 0.2),
+    0 8px 24px rgba(177, 130, 45, 0.16);
   color: var(--gold-bright);
 }
 
-.btn-error,
-.btn-surrender {
-  border-color: rgba(255, 119, 124, 0.48);
-  background: rgba(114, 38, 52, 0.32);
+.btn-primary:hover:not(:disabled) {
+  background:
+    var(--button-sheen),
+    linear-gradient(
+      135deg,
+      rgba(231, 199, 122, 0.48),
+      rgba(199, 156, 79, 0.38)
+  );
+  box-shadow:
+    inset 0 1px rgba(255, 246, 210, 0.36),
+    inset 0 -1px rgba(99, 69, 26, 0.16),
+    0 10px 28px rgba(177, 130, 45, 0.24);
+}
+
+.btn-secondary {
+  border-color: rgba(184, 120, 66, 0.7);
+  background:
+    var(--button-sheen),
+    linear-gradient(145deg, rgba(184, 120, 66, 0.3), rgba(17, 26, 45, 0.76));
+  color: var(--bronze-bright);
+}
+
+.btn-accent {
+  border-color: rgba(203, 212, 226, 0.58);
+  background:
+    var(--button-sheen),
+    linear-gradient(145deg, rgba(203, 212, 226, 0.28), rgba(17, 26, 45, 0.76));
+  color: var(--silver-bright);
+}
+
+.btn-ghost {
+  border-color: rgba(231, 199, 122, 0.46);
+  background: var(--button-sheen), rgba(12, 19, 34, 0.58);
+  color: var(--gold-bright);
+}
+
+.btn-danger {
+  border-color: rgba(255, 119, 124, 0.62);
+  background: var(--button-sheen), rgba(114, 38, 52, 0.46);
   color: #ffb1b2;
 }
 
-.btn-error:hover:not(:disabled),
-.btn-surrender:hover:not(:disabled) {
-  background: rgba(140, 49, 59, 0.5);
+.btn-danger:hover:not(:disabled) {
+  background: var(--button-sheen), rgba(140, 49, 59, 0.58);
 }
 
 .btn-sm {
   min-height: 36px;
   padding: 7px 13px;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
 }
 
 .btn-full {
   width: 100%;
 }
 
+.war-action-button {
+  margin-top: 14px;
+}
+
 .command-container,
 .roster-screen {
+  position: relative;
   width: min(100% - 32px, 1120px);
   min-height: 100vh;
   margin: 0 auto;
@@ -312,8 +583,7 @@ p {
   text-shadow: 0 0 25px rgba(231, 199, 122, 0.15);
 }
 
-.command-header p,
-.roster-header p {
+.command-header p {
   margin: 0;
   color: var(--muted);
 }
@@ -352,31 +622,25 @@ p {
 }
 
 .roster-header {
-  margin: 3px 0 20px;
+  margin: 3px 0 8px;
   text-align: center;
 }
 
 .roster-header h1 {
+  margin-bottom: 0;
   font-size: clamp(1.55rem, 3vw, 2.2rem);
 }
 
 .roster-war-entry {
-  margin-bottom: 14px;
-  padding: 17px 20px;
-  border-color: rgba(255, 119, 124, 0.36);
+  margin-bottom: 10px;
+  padding: 8px 20px;
   text-align: center;
 }
 
-.roster-war-entry h2 {
-  margin: 0 0 4px;
-  color: #ffb1b2;
-  font-size: 1.15rem;
-}
-
 .roster-war-entry p {
-  margin: 4px 0 12px;
+  margin: 0 0 6px;
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: 0.95rem;
 }
 
 .roster-filter-card {
@@ -389,7 +653,7 @@ p {
   display: block;
   margin-bottom: 7px;
   color: var(--gold);
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   font-weight: 700;
 }
 
@@ -412,7 +676,8 @@ p {
   align-content: start;
   gap: 14px;
   overflow-y: auto;
-  padding: 2px 6px 12px 2px;
+  padding: 12px 6px 12px 2px;
+  border-top: 1px solid var(--line);
   scrollbar-color: var(--gold-muted) transparent;
 }
 
@@ -428,10 +693,12 @@ p {
 }
 
 .roster-saint-card {
-  display: flex;
+  display: grid;
   min-width: 0;
+  min-height: 190px;
+  grid-template-columns: minmax(100px, 0.8fr) minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   padding: 14px;
   cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
@@ -444,27 +711,27 @@ p {
 }
 
 .roster-saint-image {
-  width: 68px;
-  height: 76px;
-  flex: 0 0 68px;
+  width: 100%;
+  height: 160px;
   border: 1px solid rgba(231, 199, 122, 0.2);
   border-radius: 13px;
-  background: rgba(5, 10, 21, 0.58);
+  background-color: rgba(5, 10, 21, 0.58);
   object-fit: contain;
 }
 
 .roster-saint-info {
   min-width: 0;
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.9rem;
   line-height: 1.5;
+  text-align: left;
 }
 
 .roster-saint-info h3 {
   overflow: hidden;
   margin: 0 0 4px;
   color: var(--gold-bright);
-  font-size: 0.96rem;
+  font-size: 1.05rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -484,7 +751,7 @@ p {
   border-radius: 999px;
   background: rgba(55, 121, 92, 0.2);
   color: var(--success);
-  font-size: 0.68rem;
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
@@ -606,11 +873,66 @@ option {
   color: var(--gold-bright);
 }
 
+.saint-detail-screen {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.saint-detail-screen .command-header {
+  flex: none;
+  margin-bottom: 16px;
+}
+
+.saint-action-status {
+  flex: none;
+  margin-bottom: 12px;
+  border-color: var(--gold);
+  text-align: center;
+}
+
+.saint-action-status p {
+  margin: 0;
+}
+
+.saint-action-status p:first-child {
+  margin-bottom: 5px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.saint-action-status p:last-child {
+  color: var(--silver);
+  font-size: 0.9rem;
+}
+
 .saint-detail-content {
   display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 16px;
+  padding: 0 4px 14px 0;
+  overflow: hidden;
+}
+
+.saint-detail-profile,
+.saint-detail-records {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
   gap: 14px;
-  padding: 0 4px 18px 0;
-  overflow-y: auto;
+}
+
+.saint-detail-profile {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.saint-detail-records {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .saint-heading-card,
@@ -620,21 +942,100 @@ option {
   padding: clamp(16px, 3vw, 24px);
 }
 
+.saint-heading-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+}
+
 .saint-heading-card h2 {
+  margin: 0;
   color: var(--gold-bright) !important;
+}
+
+.saint-rank-label {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.saint-rank-bronze {
+  color: var(--bronze-bright);
+}
+
+.saint-rank-silver {
+  color: var(--silver-bright);
+}
+
+.saint-rank-gold,
+.saint-rank-legendary {
+  color: var(--gold-bright);
 }
 
 .saint-stats-card img {
   border: 1px solid var(--line);
-  background: rgba(4, 10, 22, 0.58) !important;
+  background-color: rgba(4, 10, 22, 0.58) !important;
 }
 
-.saint-stats-card strong {
-  color: var(--gold);
+.saint-stats-card {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.saint-detail-portrait-frame {
+  display: flex;
+  min-height: 0;
+  height: clamp(190px, 32vh, 400px);
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.saint-detail-portrait {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 12px;
+  object-fit: contain;
+  padding: 5px;
+}
+
+.saint-detail-stats {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--silver);
+  font-size: 1rem;
+}
+
+.saint-stat-label {
+  color: var(--gold-bright);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}
+
+.saint-lore-card,
+.saint-notes-card {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.saint-lore-card {
+  display: flex;
+  flex-direction: column;
 }
 
 .saint-lore-header {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
@@ -645,18 +1046,73 @@ option {
 }
 
 .saint-lore-text {
-  margin: 18px 0 0;
-  padding: 16px 18px;
+  margin: 12px 0 0;
+  padding: 12px 14px;
   border-left: 2px solid var(--gold-muted);
   border-radius: 0 12px 12px 0;
   background: rgba(5, 11, 23, 0.42);
   color: #e5dfd1;
-  font-family: Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   line-height: 1.8;
+}
+
+.saint-lore-loading {
+  margin-top: 8px;
+  color: var(--gold);
+  text-align: center;
+}
+
+.saint-lore-loading p {
+  margin: 4px 0;
+}
+
+.saint-lore-loading p + p {
+  color: var(--silver);
+  font-size: 0.9rem;
+}
+
+.saint-lore-error {
+  margin: 8px 0 0;
+  color: #ff8080;
+  font-size: 0.95rem;
+}
+
+.saint-notes-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.saint-notes-card h4 {
+  flex: none;
+}
+
+.saint-notes-input {
+  min-height: 0;
+  flex: 1;
+  resize: vertical;
+}
+
+.saint-notes-actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.saint-notes-status {
+  flex: 1 1 140px;
+  min-width: 0;
+  color: var(--bronze-bright);
+  font-size: 0.9rem;
+  text-align: left;
 }
 
 .saint-detail-actions {
   display: flex;
+  flex: none;
   justify-content: center !important;
   gap: 12px;
   padding: 14px 0 4px !important;
@@ -665,6 +1121,82 @@ option {
 
 .saint-detail-actions button {
   min-width: 140px;
+}
+
+@media (max-width: 760px) {
+  .saint-detail-screen {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .saint-detail-content {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    overflow: visible;
+  }
+
+  .saint-detail-profile {
+    grid-template-rows: auto auto;
+  }
+
+  .saint-detail-records {
+    grid-template-rows: auto auto;
+  }
+
+  .saint-stats-card {
+    min-height: 0;
+  }
+
+  .saint-detail-portrait-frame {
+    height: min(80vw, 400px);
+    min-height: 260px;
+    flex: none;
+  }
+
+  .saint-detail-portrait {
+    width: auto;
+    max-width: min(100%, 400px);
+    height: auto;
+  }
+
+  .saint-lore-card,
+  .saint-notes-card {
+    overflow: visible;
+  }
+
+  .saint-notes-card {
+    min-height: 240px;
+  }
+
+  .saint-notes-input {
+    min-height: 120px;
+  }
+}
+
+@media (min-width: 761px) and (max-height: 700px) {
+  .saint-detail-screen {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .saint-detail-content {
+    flex: none;
+    overflow: visible;
+  }
+
+  .saint-detail-profile {
+    grid-template-rows: auto auto;
+  }
+
+  .saint-detail-records {
+    grid-template-rows: minmax(180px, auto) minmax(220px, auto);
+  }
+
+  .saint-stats-card {
+    overflow: visible;
+  }
 }
 
 .command-container.war-screen {
@@ -696,7 +1228,7 @@ option {
 
 .war-stat-card strong {
   color: var(--gold-bright);
-  font-family: "Cinzel", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.7rem;
 }
 
@@ -746,52 +1278,101 @@ option {
 
 .war-odds-note {
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.95rem;
 }
 
 .war-saint-grid,
 .war-history-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
+  gap: 14px;
 }
 
 .war-saint-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  display: grid;
+  min-width: 0;
+  min-height: 270px;
+  grid-template-areas:
+    "portrait info"
+    "deploy deploy";
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: center;
   gap: 14px;
   padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: rgba(15, 25, 43, 0.72);
-  backdrop-filter: blur(14px);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .war-saint-card-unavailable {
   opacity: 0.58;
 }
 
+.war-saint-card:not(.war-saint-card-unavailable):focus-within {
+  border-color: rgba(231, 199, 122, 0.56);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.28),
+    0 0 24px rgba(231, 199, 122, 0.12);
+}
+
+@media (hover: hover) {
+  .war-saint-card:not(.war-saint-card-unavailable):hover {
+    transform: translateY(-3px);
+    border-color: rgba(231, 199, 122, 0.56);
+    box-shadow:
+      0 14px 34px rgba(0, 0, 0, 0.28),
+      0 0 24px rgba(231, 199, 122, 0.12);
+  }
+}
+
+.war-saint-portrait-frame {
+  display: flex;
+  min-width: 0;
+  height: clamp(190px, 24vw, 280px);
+  grid-area: portrait;
+  align-items: center;
+  justify-content: center;
+}
+
+.war-screen > .command-top-bar {
+  padding-right: 52px;
+}
+
 .war-saint-info {
   display: grid;
-  justify-items: center;
-  gap: 6px;
-  text-align: center;
+  min-width: 0;
+  grid-area: info;
+  align-content: center;
+  justify-items: start;
+  gap: 8px;
+  text-align: left;
 }
 
 .war-saint-image {
-  width: 92px;
-  height: 104px;
-  margin-bottom: 4px;
+  width: 100%;
+  height: 100%;
   border: 1px solid var(--line);
-  border-radius: 14px;
-  background: rgba(4, 10, 22, 0.62);
+  border-radius: 16px;
+  background-color: rgba(4, 10, 22, 0.62);
   object-fit: contain;
+  padding: 5px;
+}
+
+.saint-cosmos-portrait {
+  background-image: url("/cosmos.gif");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: auto 160%;
+  object-fit: contain;
+  object-position: center;
 }
 
 .war-saint-name {
   color: var(--gold-bright);
-  font-family: "Cinzel", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.15rem;
   font-weight: 700;
 }
 
@@ -799,17 +1380,19 @@ option {
 .war-saint-stat,
 .war-saint-status {
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
 }
 
 .war-saint-odds {
   margin-top: 5px;
   color: var(--gold);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
 .war-saint-deploy-button {
+  grid-area: deploy;
+  min-height: 42px;
   width: 100%;
 }
 
@@ -840,6 +1423,44 @@ option {
   color: var(--gold-bright);
 }
 
+.war-battle-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.war-battle-entry {
+  display: grid;
+  gap: 5px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(4, 10, 22, 0.3);
+}
+
+.war-battle-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.war-battle-reason {
+  margin: 0;
+  color: var(--silver);
+}
+
+.war-battle-reason strong {
+  color: var(--gold-bright);
+}
+
+.war-battle-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .give-up-control {
   display: flex;
   align-items: center;
@@ -847,23 +1468,51 @@ option {
   gap: 10px;
 }
 
-.give-up-button {
-  min-height: 36px;
-  padding: 7px 12px;
-  border-color: rgba(255, 119, 124, 0.38);
-  color: #ffb1b2;
-  font-size: 0.8rem;
-}
-
 .war-end-screen {
   display: grid;
   place-items: center;
 }
 
+.war-end-screen-victory {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body:has(.war-end-screen-victory) {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#root:has(.war-end-screen-victory),
+.app-container:has(.war-end-screen-victory) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .war-end-card {
+  position: relative;
   width: min(100%, 680px);
   padding: clamp(26px, 6vw, 54px);
+  padding-top: max(44px, clamp(26px, 6vw, 54px));
   text-align: center;
+}
+
+.war-end-video {
+  display: block;
+  width: min(100%, 560px, 46.5vh);
+  aspect-ratio: 638 / 480;
+  height: auto;
+  margin: 0 auto 20px;
+  border-radius: 14px;
+  object-fit: contain;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.32),
+    0 0 18px rgba(231, 199, 122, 0.12);
 }
 
 .war-end-card h1 {
@@ -919,28 +1568,53 @@ option {
 
 @media (max-width: 560px) {
   .landing-screen {
-    padding: 14px;
+    padding: 8px;
   }
 
   .landing-card {
     border-radius: 22px;
+    padding: clamp(8px, 2vh, 18px) clamp(12px, 4vw, 24px);
   }
 
   .landing-hero {
-    flex-direction: column;
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
   }
 
-  .landing-portrait {
-    height: 150px;
+  .landing-title {
+    font-size: clamp(1.2rem, 7vw, 1.55rem);
+    line-height: 1.05;
+  }
+
+  .landing-portrait-frame {
+    width: min(100%, 140px);
+    height: clamp(90px, 16.5vh, 145px);
+    justify-self: center;
+  }
+
+  .landing-copy {
+    font-size: clamp(1.05rem, 6.2vw, 1.25rem);
+    font-weight: 500;
+  }
+
+  .landing-copy p {
+    margin: 4px 0;
+    line-height: 1.45;
   }
 
   .landing-actions {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .landing-actions .btn {
     width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 6px 4px;
+    font-size: clamp(0.72rem, 3.8vw, 0.9rem);
+    line-height: 1.1;
   }
 
   .command-container,
@@ -956,11 +1630,11 @@ option {
   }
 
   .roster-header {
-    margin: 0 0 14px;
+    margin: 0 0 8px;
   }
 
   .roster-war-entry {
-    padding: 13px;
+    padding: 8px 13px;
   }
 
   .roster-grid {
@@ -969,13 +1643,13 @@ option {
   }
 
   .roster-saint-card {
+    min-height: 160px;
+    grid-template-columns: minmax(100px, 0.8fr) minmax(0, 1fr);
     padding: 10px;
   }
 
   .roster-saint-image {
-    width: 58px;
-    height: 64px;
-    flex-basis: 58px;
+    height: 136px;
   }
 
   .roster-footer-nav {
@@ -985,8 +1659,9 @@ option {
 
   .roster-footer-nav .btn {
     min-height: 38px;
-    padding: 7px 5px;
-    font-size: 0.72rem;
+    padding: 7px 3px;
+    font-size: 0.9rem;
+    line-height: 1.2;
   }
 
   .roster-filter-row {
@@ -1018,6 +1693,26 @@ option {
     padding: 15px;
   }
 
+  .war-saint-card {
+    min-height: 0;
+    grid-template-areas:
+      "portrait"
+      "info"
+      "deploy";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+  }
+
+  .war-saint-portrait-frame {
+    height: min(68vw, 300px);
+    min-height: 220px;
+  }
+
+  .war-saint-info {
+    justify-items: center;
+    text-align: center;
+  }
+
   .saint-detail-actions {
     flex-wrap: wrap;
   }
@@ -1025,6 +1720,343 @@ option {
   .saint-detail-actions button {
     min-width: 0;
     flex: 1;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 1100px) and (min-height: 701px) {
+  .landing-card {
+    padding-block: clamp(24px, 4vh, 48px);
+  }
+
+  .landing-hero {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(12px, 3vw, 30px);
+    margin-bottom: clamp(16px, 2.5vh, 32px);
+  }
+
+  .landing-portrait-frame {
+    width: clamp(150px, 22vw, 250px);
+    height: clamp(220px, 34vh, 450px);
+  }
+
+  .landing-title {
+    font-size: clamp(1.3rem, 3.3vw, 2.3rem);
+    line-height: 1.08;
+  }
+
+  .landing-copy {
+    max-width: min(100%, 760px);
+    margin: clamp(16px, 2.5vh, 32px) auto 0;
+    font-size: clamp(1.7rem, 3.6vw, 2.1rem);
+  }
+
+  .landing-copy p {
+    line-height: 1.35;
+  }
+
+  .landing-actions {
+    margin-top: 0;
+    margin-bottom: clamp(32px, 5vh, 68px);
+  }
+
+  @media (max-height: 900px) {
+    .landing-card {
+      padding-block: clamp(12px, 2vh, 20px);
+    }
+
+    .landing-hero {
+      margin-bottom: clamp(10px, 2vh, 18px);
+    }
+
+    .landing-portrait-frame {
+      height: clamp(170px, 28vh, 260px);
+    }
+
+    .landing-title {
+      font-size: clamp(1.15rem, 2.6vw, 1.7rem);
+    }
+
+    .landing-copy {
+      font-size: clamp(1.3rem, 2.4vw, 1.6rem);
+    }
+
+    .landing-copy p {
+      line-height: 1.3;
+    }
+
+    .landing-actions {
+      margin-bottom: clamp(12px, 2vh, 20px);
+    }
+  }
+}
+
+@media (max-height: 620px) {
+  .landing-screen {
+    padding-block: 6px;
+  }
+
+  .landing-card {
+    padding-block: 6px;
+  }
+
+  .landing-hero {
+    margin-bottom: 4px;
+  }
+
+  .landing-portrait-frame {
+    height: clamp(60px, 13vh, 90px);
+  }
+
+  .landing-title {
+    font-size: clamp(0.9rem, 2.8vw, 1.1rem);
+    line-height: 1.05;
+  }
+
+  .landing-copy {
+    font-size: 0.95rem;
+  }
+
+  .landing-copy p {
+    margin: 3px 0;
+    line-height: 1.2;
+  }
+
+  .landing-actions {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .landing-actions .btn {
+    min-height: 34px;
+    padding: 4px 2px;
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-height: 740px) {
+  .war-end-screen-victory {
+    padding-block: 6px;
+  }
+
+  .war-end-screen-victory .war-end-card {
+    max-height: 100%;
+    padding: 44px clamp(12px, 3vw, 24px) 6px;
+  }
+
+  .war-end-screen-victory .war-end-video {
+    width: min(100%, 560px, calc(22vh * 638 / 480));
+    margin-bottom: 6px;
+  }
+
+  .war-end-screen-victory .war-end-card h1 {
+    margin: 4px 0;
+    font-size: clamp(1.05rem, 3.8vw, 1.6rem);
+    line-height: 1;
+  }
+
+  .war-end-screen-victory .war-end-card p:not(.war-end-symbol) {
+    margin: 4px 0;
+    font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+    line-height: 1.15;
+  }
+
+  .war-end-screen-victory .war-action-button {
+    min-height: 32px;
+    margin-top: 6px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-height: 400px) {
+  .landing-screen {
+    padding: 4px 8px;
+  }
+
+  .landing-card {
+    padding-block: 4px;
+  }
+
+  .landing-hero {
+    gap: 4px;
+    margin-bottom: 2px;
+  }
+
+  .landing-portrait-frame {
+    height: 48px;
+  }
+
+  .landing-title {
+    font-size: 0.8rem;
+    line-height: 1;
+  }
+
+  .landing-copy {
+    font-size: 0.82rem;
+  }
+
+  .landing-copy p {
+    margin: 2px 0;
+    line-height: 1.1;
+  }
+
+  .landing-actions {
+    margin-bottom: 4px;
+  }
+
+  .landing-actions .btn {
+    min-height: 30px;
+    font-size: 0.65rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 620px) {
+  .roster-screen {
+    height: 100dvh;
+    min-height: 0;
+    padding-block: 8px;
+  }
+
+  .roster-topbar {
+    margin-bottom: 0;
+  }
+
+  .roster-header {
+    margin: 0 0 4px;
+  }
+
+  .roster-header h1 {
+    margin-bottom: 0;
+    font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+    line-height: 1.1;
+  }
+
+  .roster-war-entry {
+    margin-bottom: 6px;
+    padding: 4px 12px;
+  }
+
+  .roster-war-entry p {
+    margin: 0 0 4px;
+    font-size: 0.8rem;
+    line-height: 1.2;
+  }
+
+  .roster-war-entry .btn {
+    min-height: 32px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    line-height: 1.2;
+  }
+
+  .roster-list-heading {
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+    line-height: 1.2;
+  }
+
+  .roster-grid {
+    gap: 10px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .roster-footer-nav {
+    gap: 6px;
+    padding-top: 6px;
+  }
+
+  .roster-footer-nav .btn {
+    min-height: 32px;
+    padding: 4px 6px;
+    font-size: 0.8rem;
+    line-height: 1.2;
+  }
+
+  .war-campaign-card {
+    padding: 12px;
+  }
+
+  .war-threat {
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .war-threat-summary {
+    position: sticky;
+    z-index: 2;
+    top: 6px;
+    padding: 6px 10px;
+    font-size: 0.76rem;
+    line-height: 1.1;
+  }
+
+  .war-threat-summary h3 {
+    margin-bottom: 2px;
+    font-size: 1rem;
+  }
+
+  .war-threat-summary p {
+    margin: 2px 0;
+    line-height: 1.1;
+  }
+
+  .landing-screen {
+    padding-block: 6px;
+  }
+
+  .landing-card {
+    padding-top: clamp(12px, 3vh, 20px);
+    padding-bottom: 6px;
+  }
+
+  .landing-hero {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(6px, 2vh, 12px);
+    margin-bottom: clamp(4px, 1.5vh, 8px);
+  }
+
+  .landing-portrait-frame {
+    width: clamp(100px, 22vw, 180px);
+    height: clamp(100px, 30vh, 145px);
+  }
+
+  .landing-title {
+    font-size: clamp(0.95rem, 5vh, 1.4rem);
+    line-height: 1;
+  }
+
+  .landing-copy {
+    max-width: min(100%, 760px);
+    margin-top: clamp(6px, 1.5vh, 10px);
+    font-size: clamp(0.82rem, 4vh, 1rem);
+  }
+
+  .landing-copy p {
+    line-height: 1.15;
+  }
+
+  .landing-actions {
+    margin-bottom: clamp(4px, 1.5vh, 8px);
+  }
+
+  @media (max-height: 360px) {
+    .landing-card {
+      padding-top: 10px;
+      padding-bottom: 4px;
+    }
+
+    .landing-portrait-frame {
+      height: clamp(78px, 27vh, 105px);
+    }
+
+    .landing-title {
+      font-size: clamp(0.85rem, 4.4vh, 1.05rem);
+    }
+
+    .landing-copy {
+      font-size: 0.78rem;
+    }
   }
 }
 

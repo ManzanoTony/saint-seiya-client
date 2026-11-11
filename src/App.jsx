@@ -7,6 +7,7 @@ import WarStatsScreen from "./components/WarStatsScreen";
 import WinningScreen from "./components/WinningScreen";
 import LosingScreen from "./components/LosingScreen";
 import LoadingScreen from "./components/LoadingScreen";
+import Music from "./components/Music";
 import { requestApi } from "./assets/api";
 import "./index.css";
 
@@ -108,6 +109,7 @@ function App() {
 
   return (
     <div className="app-container">
+      <Music />
       <Routes>
         {/* Landing Screen */}
         <Route
@@ -202,10 +204,10 @@ function DetailWrapper({
         <p className="request-error" role="alert">
           Could not load the Saint records: {saintLoadError}
         </p>
-        <button type="button" className="btn-primary" onClick={onRetryLoad}>
+        <button type="button" className="btn btn-primary" onClick={onRetryLoad}>
           Retry
         </button>
-        <button type="button" className="btn-secondary" onClick={onBack}>
+        <button type="button" className="btn btn-primary" onClick={onBack}>
           Back to Roster
         </button>
       </div>
@@ -216,7 +218,7 @@ function DetailWrapper({
     return (
       <div style={{ textAlign: "center", padding: "40px", color: "#ff4d4d" }}>
         <h3>Warrior not found in Sanctuary records.</h3>
-        <button onClick={onBack} className="btn-primary" style={{ marginTop: "15px" }}>
+        <button onClick={onBack} className="btn btn-primary" style={{ marginTop: "15px" }}>
           Back to Roster
         </button>
       </div>

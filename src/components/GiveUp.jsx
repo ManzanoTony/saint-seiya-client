@@ -8,7 +8,7 @@ function GiveUp({ campaign, onGiveUp }) {
 
   const handleGiveUp = async () => {
     const confirmed = window.confirm(
-      "Give up this war? This will count as a defeat and end the campaign."
+      "Surrender from this Holy War? This will count as a defeat and end the Holy War."
     );
 
     if (!confirmed) {
@@ -41,11 +41,11 @@ function GiveUp({ campaign, onGiveUp }) {
       {error ? <span className="give-up-error" role="alert">{error}</span> : null}
       <button
         type="button"
-        className="give-up-button"
+        className="btn btn-primary btn-sm"
         onClick={handleGiveUp}
         disabled={isGivingUp}
       >
-        {isGivingUp ? "Ending War..." : "Give Up"}
+        {isGivingUp ? "Ending War..." : "Surrender"}
       </button>
     </div>
   );

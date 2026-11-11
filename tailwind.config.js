@@ -5,10 +5,18 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
-  },
-  plugins: [require('daisyui')],
-  daisyui: {
-    themes: ["luxury", "dark"], 
+    extend: {
+      colors: {
+        celestial: {
+          night: "var(--night)",
+          deep: "var(--night-soft)",
+        },
+        armor: {
+          gold: "var(--gold)",
+          bronze: "var(--bronze)",
+          silver: "var(--silver)",
+        },
+      },
+    },
   },
 }

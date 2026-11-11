@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { requestApi } from "../assets/api";
+import { getCustomSaintImage, getSaintImage } from "../assets/saintImages";
 import LoadingScreen from "./LoadingScreen";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5005";
@@ -72,13 +73,6 @@ function CommandCenter({
     const fullRank = `${formData.rank} Saint`;
     const defaultPower =
       formData.rank === "Gold" ? 250 : formData.rank === "Silver" ? 160 : 115;
-    const defaultImage =
-      formData.rank === "Gold"
-        ? "/Saga.png"
-        : formData.rank === "Silver"
-          ? "/Marin.png"
-          : "/Seiya.png";
-
     let generatedLore = "";
     let loreWarning = "";
     try {
@@ -113,7 +107,7 @@ function CommandCenter({
       gender: formData.gender,
       cosmosPower: defaultPower,
       status: "Ready",
-      image: defaultImage,
+      image: getCustomSaintImage(formData.gender),
       comments: "",
       lore: generatedLore,
       isCustom: true,
@@ -166,47 +160,38 @@ function CommandCenter({
     <main className="roster-screen">
       {/* Top Bar */}
       <div className="roster-topbar">
-        <button onClick={onBack} className="btn btn-ghost btn-sm text-warning">
+        <button onClick={onBack} className="btn btn-primary btn-sm">
           ← Home
         </button>
       </div>
 
       {/* Header */}
       <header className="roster-header">
-        <h1>
-          Sanctuary Command Center
-        </h1>
-        <p>Holy War Roster Operations</p>
+        <h1>SANCTUARY</h1>
       </header>
 
       {/* Error & Notice Banners */}
       {rosterError ? (
-        <div className="alert alert-error mb-4 shadow-lg text-sm" role="alert">
+        <div className="alert alert-error mb-4 shadow-lg text-base" role="alert">
           <span>Could not load the roster: {rosterError}</span>
         </div>
       ) : null}
       {!showCreateModal && actionError ? (
-        <div className="alert alert-error mb-4 shadow-lg text-sm" role="alert">
+        <div className="alert alert-error mb-4 shadow-lg text-base" role="alert">
           <span>{actionError}</span>
         </div>
       ) : null}
       {noticeMessage ? (
-        <div className="alert alert-info mb-4 shadow-lg text-sm" role="status">
+        <div className="alert alert-info mb-4 shadow-lg text-base" role="status">
           <span>{noticeMessage}</span>
         </div>
       ) : null}
 
       {/* War Room entry point */}
-      <div className="card roster-war-entry">
-        <h2>
-          Sanctuary War Room
-        </h2>
-        <p>
-          Defend Athena's Sanctuary, deploy your Saints, and track your campaign.
-        </p>
+      <div className="roster-war-entry">
         <div>
-          <button onClick={onOpenWar} className="btn btn-error btn-sm">
-            Enter War Room
+          <button onClick={onOpenWar} className="btn btn-primary btn-sm">
+            Defend Sanctuary
           </button>
         </div>
       </div>
@@ -218,7 +203,7 @@ function CommandCenter({
             htmlFor="saint-search"
             className="form-label"
           >
-            Search saints by name or armor
+            Search Saints by name or armor
           </label>
           <input
             id="saint-search"
@@ -239,7 +224,7 @@ function CommandCenter({
             htmlFor="saint-rank-filter"
             className="form-label"
           >
-            Filter saints by rank
+            Filter Saints by rank
           </label>
           <div className="roster-filter-row">
             <select
@@ -252,13 +237,12 @@ function CommandCenter({
               <option value="Bronze">Bronze Saints</option>
               <option value="Silver">Silver Saints</option>
               <option value="Gold">Gold Saints</option>
-              <option value="Guard">Generic Guards</option>
             </select>
             {filterRank !== "All" ? (
               <button
                 type="button"
                 onClick={() => setFilterRank("All")}
-                className="btn btn-outline btn-warning btn-sm"
+                className="btn btn-secondary btn-sm"
               >
                 Clear Filter
               </button>
@@ -267,9 +251,7 @@ function CommandCenter({
         </div>
       ) : null}
 
-      <h2 className="roster-list-heading">
-        Active Roster ({filteredSaints.length})
-      </h2>
+      <h2 className="roster-list-heading">MANAGE YOUR SAINTS</h2>
 
       {/* Scrollable roster */}
       <div
@@ -291,34 +273,32 @@ function CommandCenter({
               className="card roster-saint-card"
             >
               <img
-                src={
-                  saint.image?.startsWith("http") ||
-                  saint.image?.startsWith("/")
-                    ? saint.image
-                    : `/${saint.image ? saint.image : "Generic-Warrior-1.jpg"}`
-                }
+                src={getSaintImage(saint)}
                 alt={saint.name}
-                className="roster-saint-image"
+                className="roster-saint-image saint-cosmos-portrait"
               />
               <div className="roster-saint-info">
                 <h3>{saint.name}</h3>
                 <p>
-                  <strong>Rank:</strong> {saint.rank}
+                  {String(saint.rank || "Bronze").replace(
+                    /(?:\s+Saint)+$/i,
+                    "",
+                  )}
                 </p>
-                <p>
-                  <strong>Armor:</strong> {saint.constellation}
-                </p>
-                <p>
-                  <span
-                    className={`badge ${
-                      saint.status === "Injured"
-                        ? "badge-error"
-                        : "badge-success"
-                    }`}
-                  >
-                    {saint.status}
-                  </span>
-                </p>
+                <p>{saint.constellation}</p>
+                {saint.status && saint.status !== "Ready" ? (
+                  <p>
+                    <span
+                      className={`badge ${
+                        saint.status === "Injured"
+                          ? "badge-error"
+                          : "badge-success"
+                      }`}
+                    >
+                      {saint.status}
+                    </span>
+                  </p>
+                ) : null}
               </div>
             </div>
           ))
@@ -338,19 +318,19 @@ function CommandCenter({
             setNoticeMessage("");
             setShowCreateModal(true);
           }}
-          className="btn btn-outline btn-sm"
+          className="btn btn-primary btn-sm"
         >
           Create Saint
         </button>
         <button
           onClick={() => setShowSearch((isVisible) => !isVisible)}
-          className="btn btn-outline btn-sm"
+          className="btn btn-primary btn-sm"
         >
           {showSearch ? "Close Search" : "Search"}
         </button>
         <button
           onClick={() => setShowFilter((isVisible) => !isVisible)}
-          className="btn btn-outline btn-sm"
+          className="btn btn-primary btn-sm"
         >
           {showFilter ? "Close Filter" : "Filter"}
         </button>
@@ -360,21 +340,19 @@ function CommandCenter({
       {showCreateModal ? (
         <div className="roster-modal">
           <div className="roster-modal-box">
-            <h2>
-              Create Custom Saint
-            </h2>
+            <h2>Create a Custom Saint</h2>
             {actionError ? (
-              <div className="alert alert-error mb-3 text-xs" role="alert">
+              <div className="alert alert-error mb-3 text-sm" role="alert">
                 <span>{actionError}</span>
               </div>
             ) : null}
             {noticeMessage ? (
-              <div className="alert alert-info mb-3 text-xs" role="status">
+              <div className="alert alert-info mb-3 text-sm" role="status">
                 <span>{noticeMessage}</span>
               </div>
             ) : null}
             {isSubmitting ? (
-              <div className="alert alert-warning mb-3 text-xs" role="status">
+              <div className="alert alert-warning mb-3 text-sm" role="status">
                 <span>{creationStep}</span>
               </div>
             ) : null}
@@ -425,15 +403,15 @@ function CommandCenter({
               <div className="roster-modal-actions">
                 <button
                   type="submit"
-                  className="btn btn-warning btn-sm"
+                  className="btn btn-primary btn-sm"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Forging Legend..." : "Create Warrior"}
+                  {isSubmitting ? "Creating your Saint..." : "Create Saint"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="btn btn-ghost btn-sm"
+                  className="btn btn-secondary btn-sm"
                   disabled={isSubmitting}
                 >
                   Cancel

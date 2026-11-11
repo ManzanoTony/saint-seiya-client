@@ -1,8 +1,18 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function WinningScreen({ onHome }) {
   const [isResetting, setIsResetting] = useState(false);
   const [error, setError] = useState("");
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.play().catch((playError) => {
+      console.error("Could not autoplay Blue-For-Ever:", playError);
+    });
+  }, []);
 
   const handleHome = async () => {
     setIsResetting(true);
@@ -17,17 +27,28 @@ function WinningScreen({ onHome }) {
   };
 
   return (
-    <main className="command-container war-end-screen">
+    <main className="command-container war-end-screen war-end-screen-victory">
       <section className="form-card war-end-card war-end-victory">
-        <h1>The Sanctuary Is Saved!</h1>
+        <video
+          ref={videoRef}
+          className="war-end-video"
+          autoPlay
+          playsInline
+          preload="auto"
+          aria-label="Saint Seiya victory scene"
+        >
+          <source src="/Blue-For-Ever.mp4" type="video/mp4" />
+        </video>
+        <h1>You defeated Hades! Athena and the world have been saved!</h1>
         <p>
-          Your Saints defeated Hades' forces and protected Athena. Return home to
-          start again with a fresh roster and new campaign.
+          Your Saints defeated Hades' forces and protected Athena and the
+          World. Return home to start again with a fresh Saint roster and a new
+          Holy War.
         </p>
         {error ? <p className="war-error" role="alert">{error}</p> : null}
         <button
           type="button"
-          className="btn-primary war-action-button"
+          className="btn btn-primary war-action-button"
           onClick={handleHome}
           disabled={isResetting}
         >

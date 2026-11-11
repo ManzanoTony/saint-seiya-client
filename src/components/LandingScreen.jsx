@@ -3,37 +3,41 @@ function LandingScreen({ onStart, onSurrender }) {
     <main className="landing-screen">
       <section className="landing-card">
         <div className="landing-hero">
-          <img
-            src="/Seiya.png"
-            alt="Saint Seiya Iconic"
-            className="landing-portrait"
-          />
-          <div>
-            <p className="landing-eyebrow">The Sanctuary awaits</p>
-            <h1 className="landing-title">Athena&apos;s Command Center</h1>
+          <div className="landing-portrait-frame">
+            <img src="/Seiya.png" alt="Seiya" className="landing-portrait" />
+          </div>
+          <div className="landing-portrait-frame">
+            <img src="/Athena.png" alt="Athena" className="landing-portrait" />
           </div>
         </div>
 
-        <div className="landing-copy">
-          <h2>The Holy War Begins</h2>
-          <p>
-            Welcome, Commander. Evil forces are rising, and the Sanctuary needs
-            your tactical guidance. Manage your roster of Saints, inspect combat
-            readiness, track war statistics, and deploy warriors to defend Athena.
-          </p>
-          <p className="landing-hint">
-            Choose your path. The fate of the Sanctuary rests in your hands.
-          </p>
+        <div className="landing-content">
+          <div className="landing-hero-copy">
+            <h1 className="landing-title">
+              <span>Saint Seiya: The Hades</span>
+              <span>Chapter – Sanctuary</span>
+            </h1>
+          </div>
+          <div className="landing-copy">
+            <p>
+              Hear me... You are my sacred Saint, and humanity is in mortal
+              danger as Hades, the god of the underworld, unleashes his Greatest
+              Eclipse to plunge the world into eternal darkness and extinguish
+              all light! We must defeat him and his armies to protect humanity!
+              Rise, my noble Saint, and do not fail me—the fate of humanity
+              rests in your hands!
+            </p>
+          </div>
         </div>
 
         <div className="landing-actions">
-          <button type="button" onClick={onStart} className="btn btn-warning">
+          <button type="button" onClick={onStart} className="btn btn-primary">
             Save the world
           </button>
           <button
             type="button"
             onClick={onSurrender}
-            className="btn btn-surrender"
+            className="btn btn-danger"
           >
             Let the world die
           </button>
