@@ -4,12 +4,22 @@ This template provides a minimal setup to get React working in Vite with HMR and
 
 ## Running the app
 
-The Groq API key must be kept on the server. Copy `saint-seiya-project/.env.example` to `saint-seiya-project/.env` and set `GROQ_API_KEY` there. For existing setups, the API server also reads `VITE_GROQ_API_KEY` from `saint-seiya-client/.env` server-side, but moving it to the server `.env` is recommended.
+The Groq API key must stay on the API server. Copy `saint-seiya-project/.env.example` to `saint-seiya-project/.env` and set `GROQ_API_KEY` there. Never put the key in a `VITE_` variable or the client `.env`; Vite variables are for public client configuration.
+
+The client only needs the public API URL. Copy `.env.example` to `.env` if you need to change its default `VITE_API_URL`.
 
 1. Start (or restart) the API server from `saint-seiya-project` with `npm start`.
 2. Start the client from `saint-seiya-client` with `npm run dev`.
 
-The client does not send the key to the browser; it calls the API server, which uses the key to contact Groq.
+The client calls the API server, which uses the key to contact Groq. The local API server allows `http://localhost:5173` by default. AI-backed endpoints have per-IP rate limits.
+
+## Deployment
+
+- On Render, set `GROQ_API_KEY` as a secret environment variable and `CLIENT_ORIGINS` to the exact Vercel site origin, such as `https://your-app.vercel.app`. Separate multiple allowed origins with commas.
+- On Vercel, set `VITE_API_URL` to the Render API base URL, such as `https://your-api.onrender.com`. Do not add the Groq key to Vercel.
+- If you use Vercel preview deployments, add their exact origins to Render's `CLIENT_ORIGINS` only if they need API access.
+
+CORS controls which browser origins may read API responses; it does not prevent non-browser clients from calling a public API. The AI endpoint limits are in-memory and reset when the server restarts, so use a shared rate-limit store if you later run multiple backend instances.
 
 ## War battle rules
 
