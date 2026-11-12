@@ -53,6 +53,26 @@ The frontend and backend are deployed separately:
 
 ---
 
+Music and video:
+
+Youtube.
+
+---
+
+Guiding and learning
+
+Implemented timer, sound and other features learning from:
+
+https://www.w3schools.com/js/
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide
+Ironhack guides, materials, and teachers. 
+
+AI use:
+
+Gemini: for debugging, concepts explanation, guiding through some logics, and image generation.
+Copilot: generation of json data, implementation of API Key functionality. 
+
+
 ## 📌 Notes on Data Persistence & Security
 
 * **Mock Storage:** The backend uses `db.json` for lightweight file-based storage rather than a persistent database. Any newly created Saints or battle records will reset if the hosting provider spins down or restarts the container.
