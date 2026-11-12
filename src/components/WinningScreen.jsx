@@ -1,18 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import WarEndVideo from "./WarEndVideo";
 
 function WinningScreen({ onHome }) {
   const [isResetting, setIsResetting] = useState(false);
   const [error, setError] = useState("");
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.play().catch((playError) => {
-      console.error("Could not autoplay Blue-For-Ever:", playError);
-    });
-  }, []);
 
   const handleHome = async () => {
     setIsResetting(true);
@@ -29,16 +20,10 @@ function WinningScreen({ onHome }) {
   return (
     <main className="command-container war-end-screen war-end-screen-victory">
       <section className="form-card war-end-card war-end-victory">
-        <video
-          ref={videoRef}
-          className="war-end-video"
-          autoPlay
-          playsInline
-          preload="auto"
-          aria-label="Saint Seiya victory scene"
-        >
-          <source src="/Blue-For-Ever.mp4" type="video/mp4" />
-        </video>
+        <WarEndVideo
+          src="/Blue-For-Ever.mp4"
+          label="Saint Seiya victory scene"
+        />
         <h1>You defeated Hades! Athena and the world have been saved!</h1>
         <p>
           Your Saints defeated Hades' forces and protected Athena and the

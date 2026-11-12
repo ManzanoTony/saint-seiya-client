@@ -9,6 +9,8 @@ import {
 import { useLocation } from "react-router-dom";
 
 const MUSIC_VOLUME = 0.7;
+const MUSIC_FADE_DURATION = 900;
+const VIDEO_FADE_DURATION = 700;
 
 function getControlFrame(pathname) {
   const frameSelector =
@@ -58,57 +60,134 @@ function Music() {
   const targetVolumeRef = useRef(MUSIC_VOLUME);
   const transitionIdRef = useRef(0);
   const transitionRef = useRef(null);
+  const mediaFadesRef = useRef(new Map());
+  const fadeSequenceRef = useRef(0);
   const effectiveVolume = isMuted ? 0 : volume;
   const isAudioMuted = isMuted || volume === 0;
 
+  const fadeMediaTo = useCallback((media, target, duration, onComplete) => {
+    const previousFade = mediaFadesRef.current.get(media);
+    if (previousFade) {
+      window.cancelAnimationFrame(previousFade.frame);
+    }
+
+    const fadeId = ++fadeSequenceRef.current;
+    const startVolume = media.volume;
+    const startedAt = performance.now();
+    const getTarget = typeof target === "function" ? target : () => target;
+
+    const updateVolume = (now) => {
+      if (mediaFadesRef.current.get(media)?.id !== fadeId) return;
+
+      const progress = Math.min((now - startedAt) / duration, 1);
+      const targetVolume = getTarget();
+      media.volume = Math.max(
+        0,
+        Math.min(1, startVolume + (targetVolume - startVolume) * progress),
+      );
+
+      if (progress === 1) {
+        mediaFadesRef.current.delete(media);
+        onComplete?.();
+        return;
+      }
+
+      const frame = window.requestAnimationFrame(updateVolume);
+      mediaFadesRef.current.set(media, { id: fadeId, frame });
+    };
+
+    const frame = window.requestAnimationFrame(updateVolume);
+    mediaFadesRef.current.set(media, { id: fadeId, frame });
+  }, []);
+
   useEffect(() => {
     targetVolumeRef.current = effectiveVolume;
-    if (audioRef.current) {
-      audioRef.current.volume = effectiveVolume;
-      audioRef.current.muted = effectiveVolume === 0;
+    const audio = audioRef.current;
+    if (audio) {
+      audio.muted = effectiveVolume === 0;
+      if (!mediaFadesRef.current.has(audio)) {
+        audio.volume = effectiveVolume;
+      }
     }
+
+    document.querySelectorAll("video").forEach((video) => {
+      video.muted = effectiveVolume === 0;
+      if (!mediaFadesRef.current.has(video)) {
+        video.volume = effectiveVolume;
+      }
+    });
   }, [effectiveVolume]);
 
   useEffect(() => {
-    const synchronizeVideo = (video) => {
-      video.volume = effectiveVolume;
-      video.muted = effectiveVolume === 0;
-    };
-    const synchronizeNode = (node) => {
+    const visitVideos = (node, callback) => {
       if (!(node instanceof Element)) return;
       if (node instanceof HTMLVideoElement) {
-        synchronizeVideo(node);
+        callback(node);
       }
-      node.querySelectorAll("video").forEach(synchronizeVideo);
+      node.querySelectorAll("video").forEach(callback);
     };
     const observer = new MutationObserver((records) => {
       records.forEach((record) => {
-        record.addedNodes.forEach(synchronizeNode);
+        record.addedNodes.forEach((node) =>
+          visitVideos(node, (video) => {
+            video.muted = targetVolumeRef.current === 0;
+            if (video.paused) {
+              video.volume = 0;
+            } else {
+              fadeMediaTo(
+                video,
+                () => targetVolumeRef.current,
+                VIDEO_FADE_DURATION,
+              );
+            }
+          }),
+        );
+        record.removedNodes.forEach((node) =>
+          visitVideos(node, (video) => {
+            if (document.contains(video)) return;
+            fadeMediaTo(video, 0, VIDEO_FADE_DURATION, () => {
+              video.pause();
+              video.currentTime = 0;
+            });
+          }),
+        );
       });
     });
-    const synchronizeChangedVideo = (event) => {
-      if (event.target instanceof HTMLVideoElement) {
-        synchronizeVideo(event.target);
+    const handleVideoPlay = (event) => {
+      const video = event.target;
+      if (
+        video instanceof HTMLVideoElement &&
+        !mediaFadesRef.current.has(video) &&
+        video.volume < targetVolumeRef.current
+      ) {
+        fadeMediaTo(
+          video,
+          () => targetVolumeRef.current,
+          VIDEO_FADE_DURATION,
+        );
       }
     };
 
-    document.querySelectorAll("video").forEach(synchronizeVideo);
+    document.querySelectorAll("video").forEach((video) => {
+      video.muted = targetVolumeRef.current === 0;
+      if (video.paused) {
+        video.volume = 0;
+      } else {
+        fadeMediaTo(
+          video,
+          () => targetVolumeRef.current,
+          VIDEO_FADE_DURATION,
+        );
+      }
+    });
     observer.observe(document.body, { childList: true, subtree: true });
-    document.addEventListener(
-      "volumechange",
-      synchronizeChangedVideo,
-      true,
-    );
+    document.addEventListener("play", handleVideoPlay, true);
 
     return () => {
       observer.disconnect();
-      document.removeEventListener(
-        "volumechange",
-        synchronizeChangedVideo,
-        true,
-      );
+      document.removeEventListener("play", handleVideoPlay, true);
     };
-  }, [effectiveVolume]);
+  }, [fadeMediaTo]);
 
   const transitionTo = useCallback((nextSource) => {
     desiredSourceRef.current = nextSource;
@@ -116,37 +195,64 @@ function Music() {
     const player = audioRef.current;
     if (!player) return;
 
-    if (!nextSource) {
-      currentSourceRef.current = null;
+    const startNextTrack = () => {
+      if (transitionId !== transitionIdRef.current) return;
+
       player.pause();
       player.currentTime = 0;
-      player.removeAttribute("src");
-      player.load();
-      return;
-    }
 
-    if (currentSourceRef.current !== nextSource) {
-      player.pause();
-      player.currentTime = 0;
-      player.src = nextSource;
-      player.loop = true;
-      player.load();
-      currentSourceRef.current = nextSource;
-    } else if (!player.paused) {
-      return;
-    }
-
-    player.volume = targetVolumeRef.current;
-    player.muted = targetVolumeRef.current === 0;
-    player.play().catch((playError) => {
-      if (
-        transitionId === transitionIdRef.current &&
-        playError.name !== "NotAllowedError"
-      ) {
-        console.error("Could not play route music:", playError);
+      if (!nextSource) {
+        currentSourceRef.current = null;
+        player.removeAttribute("src");
+        player.load();
+        return;
       }
-    });
-  }, []);
+
+      if (currentSourceRef.current !== nextSource) {
+        player.src = nextSource;
+        player.loop = true;
+        player.load();
+        currentSourceRef.current = nextSource;
+      }
+
+      player.volume = 0;
+      player.muted = targetVolumeRef.current === 0;
+      player.play().then(() => {
+        if (transitionId !== transitionIdRef.current) return;
+        fadeMediaTo(
+          player,
+          () => targetVolumeRef.current,
+          MUSIC_FADE_DURATION,
+        );
+      }).catch((playError) => {
+        if (
+          transitionId === transitionIdRef.current &&
+          playError.name !== "NotAllowedError"
+        ) {
+          console.error("Could not play route music:", playError);
+        }
+      });
+    };
+
+    if (
+      nextSource &&
+      currentSourceRef.current === nextSource &&
+      !player.paused
+    ) {
+      fadeMediaTo(
+        player,
+        () => targetVolumeRef.current,
+        MUSIC_FADE_DURATION,
+      );
+      return;
+    }
+
+    if (!player.paused && currentSourceRef.current) {
+      fadeMediaTo(player, 0, MUSIC_FADE_DURATION, startNextTrack);
+    } else {
+      startNextTrack();
+    }
+  }, [fadeMediaTo]);
 
   useEffect(() => {
     transitionRef.current = transitionTo;
@@ -193,6 +299,10 @@ function Music() {
 
   useEffect(() => () => {
     transitionIdRef.current += 1;
+    mediaFadesRef.current.forEach(({ frame }) => {
+      window.cancelAnimationFrame(frame);
+    });
+    mediaFadesRef.current.clear();
     audioRef.current?.pause();
     audioRef.current?.removeAttribute("src");
     currentSourceRef.current = null;

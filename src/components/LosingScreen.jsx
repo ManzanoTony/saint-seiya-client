@@ -1,18 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import WarEndVideo from "./WarEndVideo";
 
 function LosingScreen({ onHome }) {
   const [isResetting, setIsResetting] = useState(false);
   const [error, setError] = useState("");
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.play().catch((playError) => {
-      console.error("Could not autoplay Athena-Dies:", playError);
-    });
-  }, []);
 
   const handleHome = async () => {
     setIsResetting(true);
@@ -29,16 +20,10 @@ function LosingScreen({ onHome }) {
   return (
     <main className="command-container war-end-screen">
       <section className="form-card war-end-card war-end-defeat">
-        <video
-          ref={videoRef}
-          className="war-end-video"
-          autoPlay
-          playsInline
-          preload="auto"
-          aria-label="Athena's final scene"
-        >
-          <source src="/Athena-Dies.mp4" type="video/mp4" />
-        </video>
+        <WarEndVideo
+          src="/Athena-Dies.mp4"
+          label="Athena's final scene"
+        />
         <h1>The Sanctuary Has Fallen</h1>
         <p>
           Hades' Greatest Eclipse is complete... Eternal darkness has consumed

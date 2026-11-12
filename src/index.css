@@ -1502,17 +1502,48 @@ body:has(.war-end-screen-victory) {
   text-align: center;
 }
 
-.war-end-video {
-  display: block;
+.war-end-video-frame {
+  position: relative;
+  display: grid;
   width: min(100%, 560px, 46.5vh);
   aspect-ratio: 638 / 480;
-  height: auto;
+  place-items: center;
   margin: 0 auto 20px;
+  overflow: hidden;
+  border: 1px solid var(--gold-line);
   border-radius: 14px;
-  object-fit: contain;
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.32),
     0 0 18px rgba(231, 199, 122, 0.12);
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(86, 107, 151, 0.24), transparent 58%),
+    var(--night-soft);
+}
+
+.war-end-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.war-end-video-feedback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  color: var(--gold-bright);
+  text-align: center;
+  background: rgba(8, 13, 27, 0.82);
+  backdrop-filter: blur(3px);
+}
+
+.war-end-video-feedback[role="alert"] {
+  color: var(--muted);
 }
 
 .war-end-card h1 {
@@ -1843,7 +1874,7 @@ body:has(.war-end-screen-victory) {
     padding: 44px clamp(12px, 3vw, 24px) 6px;
   }
 
-  .war-end-screen-victory .war-end-video {
+  .war-end-screen-victory .war-end-video-frame {
     width: min(100%, 560px, calc(22vh * 638 / 480));
     margin-bottom: 6px;
   }
